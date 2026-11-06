@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://github.com/hkhearts/Autofix-Ai">
-    <img src="frontend/public/logo-full.png" alt="Autofix-AI" width="440">
+    <img src="frontend/public/symbol.png" alt="Autofix-AI" width="440">
   </a>
 </p>
 
