@@ -4,7 +4,7 @@
   </a>
 </p>
 
-<h1 align="center">Autofix-AI</h1>
+<h1 align="center">Autofix.AI</h1>
 <p align="center"><strong>Self-healing L1/L2 IT support, powered by multimodal vision and persistent incident memory.</strong></p>
 
 <p align="center">
