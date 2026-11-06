@@ -1,0 +1,59 @@
+# ==============================================================
+# Render Blueprint Configuration (render.yaml)
+# Deploy Autofix-AI to Render.com with a single click
+# ==============================================================
+
+services:
+  # ------------------------------------------------------------
+  # 1. FastAPI Backend API Service
+  # ------------------------------------------------------------
+  - type: web
+    name: autofix-ai-backend
+    env: python
+    region: oregon
+    plan: free
+    buildCommand: "pip install -r autofix-ai/backend/requirements.txt"
+    startCommand: "cd autofix-ai && uvicorn backend.main:app --host 0.0.0.0 --port $PORT"
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.0
+      - key: CONFIDENCE_THRESHOLD
+        value: "0.85"
+      - key: HINDSIGHT_BANK_ID
+        value: autofix_ai_tickets
+      - key: HINDSIGHT_BASE_URL
+        value: https://api.hindsight.vectorize.io
+      - key: GROQ_VISION_MODEL
+        value: llama-3.2-11b-vision-preview
+      - key: GROQ_TEXT_MODEL
+        value: llama-3.3-70b-versatile
+      - key: CORS_ORIGINS
+        value: "*"
+      - key: GROQ_API_KEY
+        sync: false
+      - key: HINDSIGHT_API_KEY
+        sync: false
+
+  # ------------------------------------------------------------
+  # 2. Next.js Frontend Web Console
+  # ------------------------------------------------------------
+  - type: web
+    name: autofix-ai-frontend
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: "cd autofix-ai/frontend && npm install --legacy-peer-deps && npm run build"
+    startCommand: "cd autofix-ai/frontend && npm start"
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: 20.14.0
+      - key: PORT
+        value: "3000"
+      - key: NEXT_PUBLIC_API_URL
+        fromService:
+          type: web
+          name: autofix-ai-backend
+          property: host

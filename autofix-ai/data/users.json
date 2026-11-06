@@ -1,0 +1,52 @@
+[
+  {
+    "id": "USR-001",
+    "email": "admin@autofix.ai",
+    "password": "password123",
+    "name": "Agent Alex",
+    "role": "Lead Systems Engineer",
+    "company_id": "acme-corp",
+    "company_name": "Acme Global Industries",
+    "created_at": "2026-11-06T18:00:00Z"
+  },
+  {
+    "id": "USR-002",
+    "email": "admin@acme.com",
+    "password": "password123",
+    "name": "Jane Support",
+    "role": "L1/L2 Support Specialist",
+    "company_id": "acme-corp",
+    "company_name": "Acme Global Industries",
+    "created_at": "2026-11-06T18:00:00Z"
+  },
+  {
+    "id": "USR-003",
+    "email": "devops@initech.com",
+    "password": "password123",
+    "name": "Peter Gibbons",
+    "role": "Site Reliability Engineer",
+    "company_id": "initech",
+    "company_name": "Initech Corp",
+    "created_at": "2026-11-06T18:00:00Z"
+  },
+  {
+    "id": "USR-cd4786",
+    "email": "sarah@resistance.org",
+    "password": "securepassword123",
+    "name": "Sarah Connor",
+    "role": "IT Administrator",
+    "company_id": "cyberdyne-systems",
+    "company_name": "Cyberdyne Systems",
+    "created_at": "2026-11-06T22:55:54.756103"
+  },
+  {
+    "id": "USR-292544",
+    "email": "sarah@skynet-defense.com",
+    "password": "mysecurepassword123",
+    "name": "Sarah Connor (Security Director)",
+    "role": "IT Administrator",
+    "company_id": "cyberdyne-systems-global",
+    "company_name": "Cyberdyne Systems Global",
+    "created_at": "2026-11-06T23:22:09.352434"
+  }
+]

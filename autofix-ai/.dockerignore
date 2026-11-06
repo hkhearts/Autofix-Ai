@@ -1,0 +1,14 @@
+node_modules
+.next
+out
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.env
+.env.local
+.git
+.gitignore
+.vscode
+.idea
+*.log
