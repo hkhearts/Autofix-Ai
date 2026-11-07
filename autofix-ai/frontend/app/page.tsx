@@ -51,6 +51,13 @@ export default function LandingPage() {
             </button>
 
             <Link
+              href="/how-it-works"
+              className="px-3 py-2.5 text-sm font-bold text-slate-700 dark:text-zinc-300 hover:text-slate-950 dark:hover:text-white transition-all"
+            >
+              How It Works
+            </Link>
+
+            <Link
               href="/login"
               className="px-5 py-2.5 rounded-xl text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 hover:text-slate-950 dark:hover:text-white transition-all hover:scale-105"
             >

@@ -254,6 +254,19 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ user }) => {
                 {testingConnection ? "Connecting..." : "Test Cloud Connection"}
               </button>
             </div>
+
+            {/* Fallback & Credit Saver Mode Card */}
+            <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-start space-x-3">
+              <ShieldCheck className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="text-xs font-bold text-emerald-800 dark:text-emerald-400 uppercase tracking-wider">
+                  Fallback System & Credit Saver Protection Active
+                </p>
+                <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed">
+                  To protect your small credits, Autofix-AI checks verified local memory patterns first. If a match is found, tickets resolve instantly without consuming external API credits. If cloud credits run low or error out, the system automatically falls back to local high-speed vector memory and heuristic OCR.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
 

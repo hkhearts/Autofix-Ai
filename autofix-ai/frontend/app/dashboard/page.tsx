@@ -93,6 +93,14 @@ export default function DashboardPage() {
     setSelectedTicket(updated);
   };
 
+  const handleTicketDeleted = (deletedId: string) => {
+    setTickets((prev) => prev.filter((t) => t.id !== deletedId));
+    if (selectedTicket?.id === deletedId) {
+      const remaining = tickets.filter((t) => t.id !== deletedId);
+      setSelectedTicket(remaining.length > 0 ? remaining[0] : null);
+    }
+  };
+
   const handleUpdateUser = async (updated: UserSession) => {
     setUser(updated);
     if (typeof window !== "undefined") {
@@ -205,6 +213,7 @@ export default function DashboardPage() {
               setStatusFilter={setStatusFilter}
               priorityFilter={priorityFilter}
               setPriorityFilter={setPriorityFilter}
+              onDeleteTicket={handleTicketDeleted}
             />
 
             {/* Column 2: Center Active Ticket Console */}
@@ -213,6 +222,7 @@ export default function DashboardPage() {
               apiUrl={apiUrl}
               user={user}
               onTicketUpdated={handleTicketUpdated}
+              onDeleteTicket={handleTicketDeleted}
             />
 
             {/* Column 3: Hindsight Memory Inspector */}

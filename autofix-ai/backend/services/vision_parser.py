@@ -83,7 +83,11 @@ def extract_text_from_image(
                 logger.info(f"Vision OCR extracted {len(extracted)} characters.")
                 return extracted
         except Exception as e:
-            logger.warning(f"Groq Vision API call failed: {e}. Using intelligent OCR heuristic.")
+            err_msg = str(e).lower()
+            if any(k in err_msg for k in ["rate limit", "429", "402", "credit", "quota", "balance"]):
+                logger.warning(f"[CREDIT FALLBACK] Groq Vision credit/rate limit: {e}. Utilizing intelligent OCR heuristic fallback.")
+            else:
+                logger.warning(f"Groq Vision API call failed: {e}. Using intelligent OCR heuristic.")
 
     # High-fidelity contextual OCR simulation when Groq Vision is offline or processing
     hint = context_hint.lower()
@@ -186,7 +190,11 @@ def build_error_signature(title: str, description: str, ocr_text: str = "") -> s
             if sig:
                 return sig
         except Exception as e:
-            logger.warning(f"Groq normalization failed: {e}. Using deterministic fallback normalization.")
+            err_msg = str(e).lower()
+            if any(k in err_msg for k in ["rate limit", "429", "402", "credit", "quota", "balance"]):
+                logger.warning(f"[CREDIT FALLBACK] Groq text normalization limit: {e}. Utilizing deterministic signature fallback.")
+            else:
+                logger.warning(f"Groq normalization failed: {e}. Using deterministic fallback normalization.")
 
     # High-quality deterministic fallback normalization
     combined_raw = f"{title} {description} {ocr_text}".upper()

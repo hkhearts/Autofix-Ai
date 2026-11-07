@@ -96,6 +96,14 @@ export const MemoryInspector: React.FC<MemoryInspectorProps> = ({
             className="w-full h-8.5 pl-9 pr-3 text-xs font-medium rounded-lg bg-white dark:bg-[#181822] border border-slate-200 dark:border-[#2c2c3c] text-slate-900 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-yellow-400"
           />
         </form>
+
+        <div className="mt-2.5 flex items-center justify-between text-[11px] font-semibold px-0.5">
+          <span className="flex items-center space-x-1.5 text-emerald-600 dark:text-emerald-400">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block animate-pulse" />
+            <span>Fallback System Active</span>
+          </span>
+          <span className="text-yellow-600 dark:text-yellow-400 text-[10px] uppercase font-bold tracking-wider">Credits Protected</span>
+        </div>
         {searchError && (
           <p role="alert" className="mt-2 text-xs text-red-600 dark:text-red-400">
             {searchError}

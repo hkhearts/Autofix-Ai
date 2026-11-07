@@ -12,6 +12,8 @@ import {
   Info,
   User,
   ChevronDown,
+  Zap,
+  Trash2,
 } from "lucide-react";
 import { Ticket } from "../types/ticket";
 
@@ -23,6 +25,7 @@ interface TicketStreamProps {
   setStatusFilter: (status: string) => void;
   priorityFilter: string;
   setPriorityFilter: (priority: string) => void;
+  onDeleteTicket?: (ticketId: string) => void;
 }
 
 export const TicketStream: React.FC<TicketStreamProps> = ({
@@ -33,6 +36,7 @@ export const TicketStream: React.FC<TicketStreamProps> = ({
   setStatusFilter,
   priorityFilter,
   setPriorityFilter,
+  onDeleteTicket,
 }) => {
   const [showFilterMenu, setShowFilterMenu] = useState(false);
   const [showSortMenu, setShowSortMenu] = useState(false);
@@ -311,11 +315,26 @@ export const TicketStream: React.FC<TicketStreamProps> = ({
                     : "bg-white dark:bg-[#14141c] hover:bg-slate-50/90 dark:hover:bg-[#181824] border-slate-200 dark:border-[#22222e] hover:border-slate-400 dark:hover:border-zinc-500 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0"
                 }`}
               >
-                {/* Line 1: TICKET #ID (left) ... TIME AGO (right) */}
+                {/* Line 1: TICKET #ID + Confidence Match (left) ... TIME AGO (right) */}
                 <div className="flex items-center justify-between text-xs mb-2">
-                  <span className="font-extrabold tracking-wide text-slate-600 dark:text-zinc-400">
-                    TICKET #{ticket.id.replace("TICKET-", "")}
-                  </span>
+                  <div className="flex items-center space-x-2">
+                    <span className="font-extrabold tracking-wide text-slate-600 dark:text-zinc-400">
+                      TICKET #{ticket.id.replace("TICKET-", "")}
+                    </span>
+                    {ticket.confidence_score !== undefined && ticket.confidence_score !== null && (
+                      <span
+                        className={`inline-flex items-center space-x-1 text-[10px] font-black px-1.5 py-0.5 rounded border shadow-2xs ${
+                          ticket.confidence_score >= 0.85
+                            ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30"
+                            : "bg-amber-500/15 text-amber-700 dark:text-yellow-400 border-amber-500/30"
+                        }`}
+                        title={`Hindsight Confidence: ${(ticket.confidence_score * 100).toFixed(0)}%`}
+                      >
+                        <Zap className="w-2.5 h-2.5 shrink-0" />
+                        <span>{(ticket.confidence_score * 100).toFixed(0)}%</span>
+                      </span>
+                    )}
+                  </div>
                   <span className="text-slate-400 dark:text-zinc-500 text-xs font-medium">
                     {formatAgo(ticket.created_at)}
                   </span>
@@ -330,18 +349,38 @@ export const TicketStream: React.FC<TicketStreamProps> = ({
                   <span>{ticket.title}</span>
                 </div>
 
-                {/* Line 3: User Avatar + Client Name (left) ... Status Badge (right) */}
-                <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-100 dark:border-zinc-800/80">
+                {/* Line 3: User Avatar + Client Name (left) ... Status Badge & Actions (right) */}
+                <div className="flex items-center justify-between text-xs pt-1.5 border-t border-slate-100 dark:border-zinc-800/80">
                   <div className="flex items-center space-x-1.5 text-slate-600 dark:text-zinc-300">
                     <div className="w-4.5 h-4.5 rounded-full bg-slate-200 dark:bg-zinc-800 flex items-center justify-center text-[10px]">
                       <User className="w-3 h-3 text-slate-500 dark:text-zinc-400" />
                     </div>
-                    <span className="font-medium truncate max-w-[140px]">
+                    <span className="font-medium truncate max-w-[120px]">
                       {ticket.client_name}
                     </span>
                   </div>
 
-                  {getStatusBadge(ticket)}
+                  <div className="flex items-center space-x-1.5">
+                    {getStatusBadge(ticket)}
+                    {onDeleteTicket && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (
+                            window.confirm(
+                              `Delete Ticket #${ticket.id.replace("TICKET-", "")} and purge from Hindsight knowledge?`
+                            )
+                          ) {
+                            onDeleteTicket(ticket.id);
+                          }
+                        }}
+                        className="p-1 rounded text-slate-400 hover:text-red-500 hover:bg-red-500/10 transition-colors"
+                        title="Delete Ticket and purge memory"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             );

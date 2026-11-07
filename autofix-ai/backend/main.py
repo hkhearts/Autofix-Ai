@@ -23,11 +23,13 @@ from pydantic import BaseModel, Field
 from backend.services.executor import ExecutionResult, simulate_fix
 from backend.services.hindsight_memory import (
     CONFIDENCE_THRESHOLD,
+    adelete_ticket_memory,
     aget_memory_stats,
     arecall_resolution,
     arecord_ticket_resolution,
     asearch_memory,
     atest_cloud_connection,
+    delete_ticket_memory,
     initialize_hindsight_client,
     record_ticket_resolution,
 )
@@ -412,47 +414,12 @@ async def startup_event():
                 )
                 TICKET_STORE[tid] = ticket_obj
 
-            # Add two fresh pending tickets to immediately mirror the reference UI!
-            pending_guidance = generate_guidance_insights(
-                title="Unable to access Salesforce - SSO Handshake Loop",
-                description="Salesforce login redirect loop with Okta SAML 401 error.",
-                error_signature="SALESFORCE_SSO_OKTA_CLOCK_SKEW_TIMEOUT_401",
-                ocr_text="StatusCode=401 Unauthorized clock skew exceeds threshold 180s.",
-                recall={"confidence": 0.78, "matched_ticket_id": "TICK-101", "resolution_steps": ""},
-            )
-
-            pending_123 = Ticket(
-                id="TICKET-123",
-                title="Unable to access Salesforce - SSO Handshake Loop",
-                description="Hello, write lio problemat: Unable to access Salesforce. Client: Jane Doe's could itloer and we nrinter than nettronts ko sometimes noiorescoums?",
-                client_name="Jane Doe",
-                priority="Critical",
-                category="L1",
-                status="PENDING_HUMAN_REVIEW",
-                error_signature="SALESFORCE_SSO_OKTA_CLOCK_SKEW_TIMEOUT_401",
-                resolution_steps=pending_guidance.recommended_solution,
-                confidence_score=0.78,
-                resolution_type=None,
-                diagnostic_insights=pending_guidance,
-                company_id="acme-corp",
-                created_at=(datetime.datetime.now() - datetime.timedelta(minutes=2)).isoformat(),
-                tags=["salesforce", "sso", "critical"],
-                messages=[
-                    Message(sender="Jane Doe", role="user", content="Unable to access Salesforce. Need immediate access for quarterly financial reports."),
-                    Message(
-                        sender="Hindsight Agent",
-                        role="agent",
-                        content=(
-                            f"🤖 Hindsight Pattern Match (78% Correlation):\n"
-                            f"• Pattern: {pending_guidance.matched_pattern_title}\n"
-                            f"• Root Cause: {pending_guidance.root_cause_analysis}\n\n"
-                            f"⚠️ Confidence score (78%) is below autonomous threshold (85%). "
-                            f"Recommended solution generated below for Lead Engineer review and approval."
-                        ),
-                    ),
-                ],
-            )
-            TICKET_STORE[pending_123.id] = pending_123
+            # Purge ticket 123 from store and knowledge memory as explicitly requested
+            for purge_id in ["TICKET-123", "123", "TICK-123"]:
+                if purge_id in TICKET_STORE:
+                    del TICKET_STORE[purge_id]
+            await adelete_ticket_memory("TICKET-123")
+            await adelete_ticket_memory("123")
 
             logger.info(f"Loaded {len(TICKET_STORE)} initial tickets into memory store.")
         except Exception as e:
@@ -509,8 +476,41 @@ def get_tickets(
 def get_ticket(ticket_id: str):
     ticket = TICKET_STORE.get(ticket_id)
     if not ticket:
+        # Check without or with TICKET- prefix
+        alt = ticket_id.replace("TICKET-", "") if ticket_id.startswith("TICKET-") else f"TICKET-{ticket_id}"
+        ticket = TICKET_STORE.get(alt)
+    if not ticket:
         raise HTTPException(status_code=404, detail=f"Ticket {ticket_id} not found.")
     return ticket
+
+
+@app.delete("/api/tickets/{ticket_id}", tags=["Tickets"])
+async def delete_ticket(ticket_id: str):
+    """
+    Deletes a ticket from the active ticket store and purges its memory/vector representation
+    from Hindsight memory bank so it will not be recalled as a solution pattern.
+    """
+    normalized_ids = [ticket_id, ticket_id.replace("TICKET-", ""), f"TICKET-{ticket_id}"]
+    found_key = None
+    for nid in normalized_ids:
+        if nid in TICKET_STORE:
+            found_key = nid
+            break
+
+    if found_key:
+        del TICKET_STORE[found_key]
+
+    # Purge from Hindsight persistent / local vector memory
+    await adelete_ticket_memory(ticket_id)
+    for nid in normalized_ids:
+        await adelete_ticket_memory(nid)
+
+    logger.info(f"Purged ticket {ticket_id} and its Hindsight vector memory.")
+    return {
+        "success": True,
+        "deleted_ticket_id": ticket_id,
+        "message": f"Ticket {ticket_id} and its vector memory have been successfully deleted.",
+    }
 
 
 @app.post("/api/tickets", response_model=Ticket, status_code=status.HTTP_201_CREATED, tags=["Tickets"])
@@ -567,6 +567,10 @@ async def create_ticket(
         ocr_text=ocr_text,
         recall=recall,
     )
+
+    # Ensure confidence score is realistic and reflected from pattern insights if recall was raw
+    if confidence <= 0.0:
+        confidence = round(guidance.confidence_percent / 100.0, 2)
 
     created_at = datetime.datetime.now().isoformat()
     messages = [

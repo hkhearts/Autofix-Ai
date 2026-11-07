@@ -48,6 +48,20 @@ class LocalMemoryStore:
         }
         self.last_updated = datetime.datetime.now().isoformat()
 
+    def delete(self, ticket_id: str) -> bool:
+        """
+        Removes a ticket and its learned resolution from the local memory store.
+        """
+        targets = [ticket_id, ticket_id.replace("TICKET-", ""), f"TICKET-{ticket_id}"]
+        found = False
+        for t in targets:
+            if t in self.records:
+                del self.records[t]
+                found = True
+        if found:
+            self.last_updated = datetime.datetime.now().isoformat()
+        return found
+
     def search(self, query: str, top_k: int = 5) -> List[Dict[str, Any]]:
         tokens = set(re.findall(r"\w+", query.lower()))
         if not tokens:
@@ -172,13 +186,40 @@ def test_cloud_connection(
 
 async def arecall_resolution(error_signature: str, query_text: str = "") -> Dict[str, Any]:
     """
-    Queries Hindsight memory for matching historical error signatures or OCR text patterns.
-    Returns confidence score and previous verified resolution steps.
+    Hybrid Credit-Saver Recall Engine:
+    1. First checks local vector store fallback. If a high-confidence match (>= 0.85) is found,
+       returns it immediately to conserve external API credits!
+    2. If no confident local match, queries Vectorize Hindsight Cloud SDK ("first method") as escalation/fallback.
+    3. If Hindsight Cloud returns an error (402, 429, credit limit, timeout) or lower score,
+       transparently falls back to local memory so operations NEVER halt.
     """
     initialize_hindsight_client()
     search_query = f"{error_signature} {query_text}".strip()
 
-    # 1. Try Vectorize Hindsight Cloud SDK if connected
+    # Step A: Local High-Speed Vector Memory Search
+    local_matches = _local_store.search(search_query)
+    best_local = local_matches[0] if local_matches else None
+
+    # Credit Saver optimization: If local knowledge already has high confidence >= 0.85,
+    # use it directly to save cloud API credits!
+    if best_local and best_local["confidence"] >= 0.85:
+        logger.info(
+            f"[CREDIT SAVER] High-confidence match ({best_local['confidence']:.2f}) found in local memory. "
+            f"Conserving Hindsight Cloud credits."
+        )
+        return {
+            "found": True,
+            "confidence": best_local["confidence"],
+            "resolution_steps": best_local["resolution_steps"],
+            "matched_ticket_id": best_local["ticket_id"],
+            "history": local_matches,
+            "source": "local_vector_memory",
+            "fallback_used": True,
+            "credits_saved": True,
+        }
+
+    # Step B: Escalate to Hindsight Cloud SDK ("first method")
+    cloud_result = None
     if _hindsight_client:
         try:
             results = await _hindsight_client.arecall(
@@ -201,28 +242,35 @@ async def arecall_resolution(error_signature: str, query_text: str = "") -> Dict
                 history_texts = [getattr(r, "text", "") for r in results.results[:3]]
 
                 logger.info(f"Hindsight Cloud recall returned match with confidence {score:.2f}")
-                return {
+                cloud_result = {
                     "found": True,
                     "confidence": float(score),
                     "resolution_steps": text,
                     "matched_ticket_id": doc_id,
                     "history": history_texts,
                     "source": "hindsight_cloud",
+                    "fallback_used": False,
                 }
         except Exception as e:
-            logger.warning(f"Hindsight Cloud recall error: {e}. Falling back to local vector memory.")
+            err_msg = str(e).lower()
+            if any(k in err_msg for k in ["credit", "quota", "balance", "402", "429", "rate limit", "billing"]):
+                logger.warning(f"[CREDIT FALLBACK] Hindsight Cloud credit/quota limit: {e}. Falling back to local vector memory.")
+            else:
+                logger.warning(f"Hindsight Cloud recall error: {e}. Falling back to local vector memory.")
 
-    # 2. Local vector memory search
-    matches = _local_store.search(search_query)
-    if matches:
-        best = matches[0]
+    # Return best between Cloud and Local
+    if cloud_result and (not best_local or cloud_result["confidence"] >= best_local["confidence"]):
+        return cloud_result
+
+    if best_local:
         return {
             "found": True,
-            "confidence": best["confidence"],
-            "resolution_steps": best["resolution_steps"],
-            "matched_ticket_id": best["ticket_id"],
-            "history": matches,
+            "confidence": best_local["confidence"],
+            "resolution_steps": best_local["resolution_steps"],
+            "matched_ticket_id": best_local["ticket_id"],
+            "history": local_matches,
             "source": "local_vector_memory",
+            "fallback_used": True,
         }
 
     return {
@@ -232,6 +280,7 @@ async def arecall_resolution(error_signature: str, query_text: str = "") -> Dict
         "matched_ticket_id": None,
         "history": [],
         "source": "none",
+        "fallback_used": True,
     }
 
 
@@ -319,7 +368,14 @@ async def arecord_ticket_resolution(
                 f"({HINDSIGHT_BANK_ID}, document: {cloud_document_id or ticket_id})."
             )
         except Exception as e:
-            logger.warning(f"Hindsight Cloud retain call failed: {e}. Stored in local fallback.")
+            err_msg = str(e).lower()
+            if any(k in err_msg for k in ["credit", "quota", "balance", "402", "429", "rate limit", "billing"]):
+                logger.warning(
+                    f"[CREDIT FALLBACK] Hindsight Cloud credit/quota limit reached: {e}. "
+                    f"Resolution safely preserved in local fallback memory store."
+                )
+            else:
+                logger.warning(f"Hindsight Cloud retain call failed: {e}. Stored safely in local fallback.")
 
     return True
 
@@ -395,10 +451,14 @@ async def aget_memory_stats() -> Dict[str, Any]:
         "base_url": HINDSIGHT_BASE_URL,
         "is_cloud_connected": cloud_connected,
         "total_records": total_records,
+        "local_records": total_local,
         "autonomous_resolutions": autonomous_count,
         "human_verified_resolutions": hitl_count,
         "confidence_threshold": CONFIDENCE_THRESHOLD,
         "last_updated": last_updated,
+        "fallback_system_active": True,
+        "fallback_mode": "hybrid_credit_saver",
+        "credits_protected": True,
         "promo_code": "MEMHACK99",
         "cloud_console_url": "https://ui.hindsight.vectorize.io",
         "docs_url": "https://hindsight.vectorize.io/",
@@ -450,3 +510,28 @@ async def asearch_memory(query: str, limit: int = 5) -> List[Dict[str, Any]]:
 
 def search_memory(query: str, limit: int = 5) -> List[Dict[str, Any]]:
     return asyncio.run(asearch_memory(query, limit))
+
+
+async def adelete_ticket_memory(ticket_id: str) -> bool:
+    """
+    Deletes the ticket resolution record from local vector memory and Hindsight Cloud if present.
+    Ensures that unlearned or deleted tickets do not influence future pattern matching.
+    """
+    deleted_local = _local_store.delete(ticket_id)
+    initialize_hindsight_client()
+    if _hindsight_client:
+        try:
+            targets = [ticket_id, ticket_id.replace("TICKET-", "")]
+            for doc_id in targets:
+                if hasattr(_hindsight_client, "adelete_document"):
+                    await _hindsight_client.adelete_document(bank_id=HINDSIGHT_BANK_ID, document_id=doc_id)
+                elif hasattr(_hindsight_client, "adelete_memory"):
+                    await _hindsight_client.adelete_memory(bank_id=HINDSIGHT_BANK_ID, document_id=doc_id)
+        except Exception as e:
+            logger.warning(f"Could not delete {ticket_id} from Hindsight Cloud: {e}")
+    return deleted_local
+
+
+def delete_ticket_memory(ticket_id: str) -> bool:
+    return asyncio.run(adelete_ticket_memory(ticket_id))
+

@@ -27,6 +27,8 @@ import {
   Lightbulb,
   FileSearch,
   Upload,
+  Zap,
+  Trash2,
 } from "lucide-react";
 import { Ticket, UserSession } from "../types/ticket";
 import { FileUpload } from "./FileUpload";
@@ -37,6 +39,7 @@ interface ActiveTicketViewProps {
   apiUrl: string;
   user: UserSession;
   onTicketUpdated: (updatedTicket: Ticket) => void;
+  onDeleteTicket?: (ticketId: string) => void;
 }
 
 export const ActiveTicketView: React.FC<ActiveTicketViewProps> = ({
@@ -44,6 +47,7 @@ export const ActiveTicketView: React.FC<ActiveTicketViewProps> = ({
   apiUrl,
   user,
   onTicketUpdated,
+  onDeleteTicket,
 }) => {
   const [replyText, setReplyText] = useState("");
   const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
@@ -182,9 +186,37 @@ export const ActiveTicketView: React.FC<ActiveTicketViewProps> = ({
     }
   };
 
+  const handleDeleteTicket = async () => {
+    if (!ticket) return;
+    if (
+      !window.confirm(
+        `Are you sure you want to delete Ticket #${ticket.id.replace(
+          "TICKET-",
+          ""
+        )} and unlearn it from Hindsight memory?`
+      )
+    ) {
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      await axios.delete(`${apiUrl}/api/tickets/${ticket.id}`);
+      if (onDeleteTicket) {
+        onDeleteTicket(ticket.id);
+      }
+    } catch (e) {
+      console.error("Failed to delete ticket", e);
+      if (onDeleteTicket) {
+        onDeleteTicket(ticket.id);
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="flex-1 bg-slate-50 dark:bg-[#0e0e13] flex flex-col h-[calc(100vh-4rem)] overflow-y-auto select-none transition-colors">
-      {/* Top Banner: ACTIVE TICKET: #123 | Title | Client: Jane Doe | Priority: Critical */}
+      {/* Top Banner: ACTIVE TICKET: #ID | Title | Client: Jane Doe | Priority: Critical | Confidence: XX% */}
       <div className="px-6 py-3.5 border-b border-slate-200 dark:border-[#22222e] bg-white dark:bg-[#14141a] flex items-center justify-between shrink-0 sticky top-0 z-10 transition-colors shadow-2xs">
         <div className="text-sm font-semibold text-slate-800 dark:text-zinc-200 truncate flex items-center space-x-2.5">
           <span className="text-slate-400 dark:text-zinc-500 font-bold uppercase tracking-wider text-xs">
@@ -219,8 +251,23 @@ export const ActiveTicketView: React.FC<ActiveTicketViewProps> = ({
           </span>
         </div>
 
-        {/* Status Badge */}
-        <div className="shrink-0 ml-4">
+        {/* Right Header Badges & Actions */}
+        <div className="shrink-0 ml-4 flex items-center space-x-3">
+          {/* Confidence Score Badge */}
+          {ticket.confidence_score !== undefined && ticket.confidence_score !== null && (
+            <div
+              className={`flex items-center space-x-1.5 px-3 py-1 rounded-lg border text-xs font-black shadow-2xs ${
+                ticket.confidence_score >= 0.85
+                  ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30"
+                  : "bg-amber-500/15 text-amber-700 dark:text-yellow-400 border-amber-500/30"
+              }`}
+            >
+              <Zap className="w-3.5 h-3.5" />
+              <span>Confidence: {(ticket.confidence_score * 100).toFixed(0)}%</span>
+            </div>
+          )}
+
+          {/* Status Badge */}
           {ticket.status === "RESOLVED_AUTONOMOUSLY" ? (
             <span className="px-3 py-1 rounded-full text-xs font-bold tracking-wider bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 flex items-center space-x-1.5">
               <Sparkles className="w-3.5 h-3.5" />
@@ -241,6 +288,17 @@ export const ActiveTicketView: React.FC<ActiveTicketViewProps> = ({
               <span>PENDING HUMAN REVIEW</span>
             </span>
           )}
+
+          {/* Delete Ticket Button */}
+          <button
+            onClick={handleDeleteTicket}
+            disabled={isSubmitting}
+            className="p-1.5 px-2.5 rounded-lg border border-slate-200 dark:border-zinc-800 text-slate-400 hover:text-red-500 hover:bg-red-500/10 hover:border-red-500/30 transition-all text-xs flex items-center space-x-1.5 font-bold"
+            title="Delete Ticket from database and unlearn from Hindsight memory"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Delete</span>
+          </button>
         </div>
       </div>
 
@@ -431,7 +489,7 @@ export const ActiveTicketView: React.FC<ActiveTicketViewProps> = ({
           </div>
         )}
 
-        {/* SECTION 5: RESPONSE COMPOSER & ACTION BAR */}
+        {/* SECTION 5: RESPONSE COMPOSER & ACTION BAR (Matching Reference Mockup) */}
         <div className="rounded-xl bg-white dark:bg-[#16161e] border border-slate-200 dark:border-[#242432] p-5 space-y-4 shadow-2xs">
           {/* Rich Text Toolbar */}
           <div className="flex items-center space-x-1.5 border-b border-slate-200 dark:border-zinc-800 pb-2.5 text-slate-500 dark:text-zinc-400">
@@ -507,8 +565,8 @@ export const ActiveTicketView: React.FC<ActiveTicketViewProps> = ({
             />
           </div>
 
-          {/* Bottom Actions Row */}
-          <div className="flex items-center justify-end space-x-3 pt-2">
+          {/* Bottom Actions Row inside Composer (Checkpoint UI) */}
+          <div className="flex flex-wrap items-center justify-end gap-3 pt-2">
             {/* SEND REPLY Button */}
             <button
               onClick={handleSendReply}
@@ -534,7 +592,7 @@ export const ActiveTicketView: React.FC<ActiveTicketViewProps> = ({
               </button>
 
               {showStatusMenu && (
-                <div className="absolute right-0 bottom-full mb-1.5 w-60 rounded-xl bg-white dark:bg-[#181824] border border-slate-200 dark:border-[#2e2e3e] shadow-2xl p-2 z-50 text-xs animate-in fade-in zoom-in-95 duration-150">
+                <div className="absolute right-0 bottom-full mb-2 w-60 rounded-xl bg-white dark:bg-[#181824] border border-slate-200 dark:border-[#2e2e3e] shadow-2xl p-2 z-50 text-xs animate-in fade-in zoom-in-95 duration-150">
                   <p className="text-[11px] uppercase font-bold text-slate-400 dark:text-zinc-500 mb-1.5 px-2">
                     Set Ticket Status
                   </p>
@@ -561,7 +619,7 @@ export const ActiveTicketView: React.FC<ActiveTicketViewProps> = ({
               <button
                 onClick={handleApproveAndSolve}
                 disabled={isSubmitting}
-                className="px-6 py-2.5 rounded-lg bg-yellow-400 hover:bg-yellow-300 text-slate-950 font-bold text-xs uppercase tracking-wider transition-all duration-200 ease-out hover:scale-105 active:scale-95 shadow hover:shadow-lg shadow-yellow-500/20 flex items-center space-x-2"
+                className="px-6 py-2.5 rounded-lg bg-yellow-400 hover:bg-yellow-300 text-slate-950 font-bold text-xs uppercase tracking-wider transition-all duration-200 ease-out hover:scale-105 active:scale-95 shadow-md hover:shadow-lg shadow-yellow-500/25 flex items-center space-x-2"
               >
                 <CheckCircle className="w-4 h-4 stroke-[2.5]" />
                 <span>APPROVE & SOLVE (HUMAN IN LOOP)</span>
