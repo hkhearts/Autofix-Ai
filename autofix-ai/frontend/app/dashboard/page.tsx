@@ -43,13 +43,24 @@ export default function DashboardPage() {
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load session from storage on mount
+  // Load user session and cached tickets from storage on mount
   useEffect(() => {
     if (typeof window !== "undefined") {
       const storedUser = localStorage.getItem("autofix_session");
       if (storedUser) {
         try {
           setUser(JSON.parse(storedUser));
+        } catch (e) {}
+      }
+      const cachedTickets = localStorage.getItem("autofix_tickets_cache");
+      if (cachedTickets) {
+        try {
+          const parsed: Ticket[] = JSON.parse(cachedTickets);
+          if (parsed && parsed.length > 0) {
+            setTickets(parsed);
+            setSelectedTicket(parsed[0]);
+            setIsLoading(false);
+          }
         } catch (e) {}
       }
     }
@@ -60,10 +71,13 @@ export default function DashboardPage() {
     try {
       const res = await axios.get(`${apiUrl}/api/tickets`);
       const data: Ticket[] = res.data;
-      setTickets(data);
+      if (Array.isArray(data) && data.length > 0) {
+        setTickets(data);
+        if (typeof window !== "undefined") {
+          localStorage.setItem("autofix_tickets_cache", JSON.stringify(data));
+        }
 
-      // Auto select first ticket if none selected or keep current updated
-      if (data.length > 0) {
+        // Auto select first ticket if none selected or keep current updated
         setSelectedTicket((prev) => {
           if (!prev) return data[0];
           const fresh = data.find((t) => t.id === prev.id);
@@ -71,7 +85,7 @@ export default function DashboardPage() {
         });
       }
     } catch (e) {
-      console.warn("Could not fetch tickets from backend; waiting for connection.", e);
+      console.warn("Could not fetch tickets from backend; using session cache.", e);
     } finally {
       setIsLoading(false);
     }
@@ -84,18 +98,36 @@ export default function DashboardPage() {
   }, [apiUrl]);
 
   const handleTicketCreated = (newTicket: Ticket) => {
-    setTickets((prev) => [newTicket, ...prev]);
+    setTickets((prev) => {
+      const updated = [newTicket, ...prev];
+      if (typeof window !== "undefined") {
+        localStorage.setItem("autofix_tickets_cache", JSON.stringify(updated));
+      }
+      return updated;
+    });
     setSelectedTicket(newTicket);
     setActiveTab("TICKETS");
   };
 
   const handleTicketUpdated = (updated: Ticket) => {
-    setTickets((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
+    setTickets((prev) => {
+      const nextTickets = prev.map((t) => (t.id === updated.id ? updated : t));
+      if (typeof window !== "undefined") {
+        localStorage.setItem("autofix_tickets_cache", JSON.stringify(nextTickets));
+      }
+      return nextTickets;
+    });
     setSelectedTicket(updated);
   };
 
   const handleTicketDeleted = (deletedId: string) => {
-    setTickets((prev) => prev.filter((t) => t.id !== deletedId));
+    setTickets((prev) => {
+      const nextTickets = prev.filter((t) => t.id !== deletedId);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("autofix_tickets_cache", JSON.stringify(nextTickets));
+      }
+      return nextTickets;
+    });
     if (selectedTicket?.id === deletedId) {
       const remaining = tickets.filter((t) => t.id !== deletedId);
       setSelectedTicket(remaining.length > 0 ? remaining[0] : null);

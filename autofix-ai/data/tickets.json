@@ -1,0 +1,1321 @@
+{
+  "TICK-101": {
+    "id": "TICK-101",
+    "title": "Unable to access Salesforce - SSO Handshake Timeout",
+    "description": "Salesforce login keeps redirecting to Okta error page: 'SAML response validation failed (Clock skew or expired assertion)'. Need access urgently for Q4 close.",
+    "client_name": "Jane Doe",
+    "priority": "Critical",
+    "category": "L1",
+    "status": "RESOLVED_HUMAN_VERIFIED",
+    "error_signature": "SALESFORCE_SSO_OKTA_CLOCK_SKEW_TIMEOUT_401",
+    "resolution_steps": "1. Resync local NTP time service using `w32tm /resync /force`\n2. Invalidate Okta cached active tokens via Admin API `POST /api/v1/users/{id}/lifecycle/reset_factors`\n3. Clear Google Chrome SAML cookie storage for `.salesforce.com` and restart browser session\n4. Verified SSO handshake completes with status 200 OK.",
+    "confidence_score": 0.82,
+    "resolution_type": "HUMAN_IN_THE_LOOP",
+    "execution_result": {
+      "success": true,
+      "steps_executed": [
+        "Resync local NTP time service using `w32tm /resync /force`",
+        "Invalidate Okta cached active tokens via Admin API `POST /api/v1/users/{id}/lifecycle/reset_factors`",
+        "Clear Google Chrome SAML cookie storage for `.salesforce.com` and restart browser session",
+        "Verified SSO handshake completes with status 200 OK."
+      ],
+      "simulated_output": [
+        "[INIT] Autofix-AI Autonomous Execution Engine v2.4",
+        "[TARGET] Ticket: TICK-101 | Execution Mode: Containerized Sandbox",
+        "[TIMESTAMP] 2026-11-07 09:56:24 UTC",
+        "---",
+        "[STEP 1/4] Resync local NTP time service using `w32tm /resync /force`",
+        "  [EXEC] w32tm /resync /force -> Sending resync command to local computer... The command completed successfully (Offset: 0.0012s).",
+        "[STEP 2/4] Invalidate Okta cached active tokens via Admin API `POST /api/v1/users/{id}/lifecycle/reset_factors`",
+        "  [EXEC] okta-admin-cli revoke-sessions -> Invalidation of stale SAML assertion completed. Fresh challenge issued.",
+        "[STEP 3/4] Clear Google Chrome SAML cookie storage for `.salesforce.com` and restart browser session",
+        "  [EXEC] okta-admin-cli revoke-sessions -> Invalidation of stale SAML assertion completed. Fresh challenge issued.",
+        "[STEP 4/4] Verified SSO handshake completes with status 200 OK.",
+        "  [EXEC] okta-admin-cli revoke-sessions -> Invalidation of stale SAML assertion completed. Fresh challenge issued.",
+        "---",
+        "[VERIFY] Remediation pipeline executed successfully. All health probes: PASS (200 OK)."
+      ],
+      "execution_time_ms": 330,
+      "notes": "Remediation verified for ticket TICK-101 across 4 automated phases."
+    },
+    "diagnostic_insights": {
+      "matched_pattern_title": "Salesforce & Okta SAML 401 Clock Skew / Stale Assertion",
+      "matched_ticket_id": "TICK-101",
+      "confidence_percent": 82,
+      "detected_signature": "SALESFORCE_SSO_OKTA_CLOCK_SKEW_TIMEOUT_401",
+      "root_cause_analysis": "SAML response validation failed due to client-server NTP time drift or stale multi-factor authentication tokens in the identity provider cache.",
+      "recommended_solution": "1. Resync local NTP time service using `w32tm /resync /force`\n2. Invalidate Okta cached active tokens via Admin API `POST /api/v1/users/{id}/lifecycle/reset_factors`\n3. Clear Google Chrome SAML cookie storage for `.salesforce.com` and restart browser session\n4. Verified SSO handshake completes with status 200 OK.",
+      "prevention_tip": "Ensure domain controller NTP synchronization policy is enforced across all client endpoints."
+    },
+    "messages": [
+      {
+        "id": "MSG-e5d390",
+        "sender": "Jane Doe",
+        "role": "user",
+        "content": "Salesforce login keeps redirecting to Okta error page: 'SAML response validation failed (Clock skew or expired assertion)'. Need access urgently for Q4 close.",
+        "timestamp": "2026-11-07T15:26:24.733197"
+      },
+      {
+        "id": "MSG-08d4af",
+        "sender": "Hindsight Agent",
+        "role": "agent",
+        "content": "\ud83e\udd16 Diagnostic Intelligence:\n\u2022 Matched Pattern: Salesforce & Okta SAML 401 Clock Skew / Stale Assertion (82% confidence)\n\u2022 Root Cause: SAML response validation failed due to client-server NTP time drift or stale multi-factor authentication tokens in the identity provider cache.\n\nActionable Remediation Protocol:\n1. Resync local NTP time service using `w32tm /resync /force`\n2. Invalidate Okta cached active tokens via Admin API `POST /api/v1/users/{id}/lifecycle/reset_factors`\n3. Clear Google Chrome SAML cookie storage for `.salesforce.com` and restart browser session\n4. Verified SSO handshake completes with status 200 OK.",
+        "timestamp": "2026-11-07T15:26:24.733197"
+      }
+    ],
+    "screenshot_preview": null,
+    "company_id": "acme-corp",
+    "created_at": "2026-11-07T14:56:24.733197",
+    "resolved_at": "2026-11-07T15:26:24.733197",
+    "tags": [
+      "sso",
+      "salesforce",
+      "okta",
+      "saml",
+      "critical"
+    ]
+  },
+  "TICK-102": {
+    "id": "TICK-102",
+    "title": "Cisco AnyConnect VPN Connection Timeout (Gateway Unreachable)",
+    "description": "Remote worker unable to connect to corporate VPN. AnyConnect hangs at 'Contacting vpn.corp.internal' then drops with error: 'Connection attempt has timed out'.",
+    "client_name": "Marcus Vance",
+    "priority": "High",
+    "category": "L1",
+    "status": "RESOLVED_AUTONOMOUSLY",
+    "error_signature": "CISCO_ANYCONNECT_GATEWAY_TIMEOUT_IP_FORWARDING_FAIL",
+    "resolution_steps": "1. Restart Cisco AnyConnect Secure Mobility Agent service (`net stop csc_vpnagent && net start csc_vpnagent`)\n2. Reset Windows Socket stack and flush DNS cache (`netsh winsock reset && ipconfig /flushdns`)\n3. Verify split tunneling routing table metric for interface 0.0.0.0/0\n4. Connection established successfully with assigned corporate IP 10.45.12.88.",
+    "confidence_score": 0.96,
+    "resolution_type": "AUTONOMOUS",
+    "execution_result": {
+      "success": true,
+      "steps_executed": [
+        "Restart Cisco AnyConnect Secure Mobility Agent service (`net stop csc_vpnagent && net start csc_vpnagent`)",
+        "Reset Windows Socket stack and flush DNS cache (`netsh winsock reset && ipconfig /flushdns`)",
+        "Verify split tunneling routing table metric for interface 0.0.0.0/0",
+        "Connection established successfully with assigned corporate IP 10.45.12.88."
+      ],
+      "simulated_output": [
+        "[INIT] Autofix-AI Autonomous Execution Engine v2.4",
+        "[TARGET] Ticket: TICK-102 | Execution Mode: Containerized Sandbox",
+        "[TIMESTAMP] 2026-11-07 09:56:24 UTC",
+        "---",
+        "[STEP 1/4] Restart Cisco AnyConnect Secure Mobility Agent service (`net stop csc_vpnagent && net start csc_vpnagent`)",
+        "  [EXEC] csc_vpnagent -> Tunnel re-established. Gateway MTU negotiated: 1406. Remote endpoint 10.45.12.88.",
+        "[STEP 2/4] Reset Windows Socket stack and flush DNS cache (`netsh winsock reset && ipconfig /flushdns`)",
+        "  [EXEC] ipconfig /flushdns -> Windows IP Configuration: Successfully flushed the DNS Resolver Cache.",
+        "[STEP 3/4] Verify split tunneling routing table metric for interface 0.0.0.0/0",
+        "  [EXEC] Applying automated patch: 'Verify split tunneling routing table metric for in' -> Completed with code 0 (Success).",
+        "[STEP 4/4] Connection established successfully with assigned corporate IP 10.45.12.88.",
+        "  [EXEC] Verifying endpoint state: 'Connection established successfully with assigned' -> Completed with code 0 (Success).",
+        "---",
+        "[VERIFY] Remediation pipeline executed successfully. All health probes: PASS (200 OK)."
+      ],
+      "execution_time_ms": 158,
+      "notes": "Remediation verified for ticket TICK-102 across 4 automated phases."
+    },
+    "diagnostic_insights": {
+      "matched_pattern_title": "Cisco AnyConnect Tunnel Gateway Timeout & Routing Drop",
+      "matched_ticket_id": "TICK-102",
+      "confidence_percent": 96,
+      "detected_signature": "CISCO_ANYCONNECT_GATEWAY_TIMEOUT_IP_FORWARDING_FAIL",
+      "root_cause_analysis": "Local Windows Socket stack corruption or TAP-Windows network adapter binding priority drop preventing DHCP pool gateway address assignment.",
+      "recommended_solution": "1. Restart Cisco AnyConnect Secure Mobility Agent service (`net stop csc_vpnagent && net start csc_vpnagent`)\n2. Reset Windows Socket stack and flush DNS cache (`netsh winsock reset && ipconfig /flushdns`)\n3. Verify split tunneling routing table metric for interface 0.0.0.0/0\n4. Connection established successfully with assigned corporate IP 10.45.12.88.",
+      "prevention_tip": "Update Cisco AnyConnect client to v4.10+ to prevent split-tunnel routing conflicts."
+    },
+    "messages": [
+      {
+        "id": "MSG-57f229",
+        "sender": "Marcus Vance",
+        "role": "user",
+        "content": "Remote worker unable to connect to corporate VPN. AnyConnect hangs at 'Contacting vpn.corp.internal' then drops with error: 'Connection attempt has timed out'.",
+        "timestamp": "2026-11-07T15:26:24.733197"
+      },
+      {
+        "id": "MSG-e8e86b",
+        "sender": "Hindsight Agent",
+        "role": "agent",
+        "content": "\ud83e\udd16 Diagnostic Intelligence:\n\u2022 Matched Pattern: Cisco AnyConnect Tunnel Gateway Timeout & Routing Drop (96% confidence)\n\u2022 Root Cause: Local Windows Socket stack corruption or TAP-Windows network adapter binding priority drop preventing DHCP pool gateway address assignment.\n\nActionable Remediation Protocol:\n1. Restart Cisco AnyConnect Secure Mobility Agent service (`net stop csc_vpnagent && net start csc_vpnagent`)\n2. Reset Windows Socket stack and flush DNS cache (`netsh winsock reset && ipconfig /flushdns`)\n3. Verify split tunneling routing table metric for interface 0.0.0.0/0\n4. Connection established successfully with assigned corporate IP 10.45.12.88.",
+        "timestamp": "2026-11-07T15:26:24.733197"
+      }
+    ],
+    "screenshot_preview": null,
+    "company_id": "acme-corp",
+    "created_at": "2026-11-07T14:56:24.733197",
+    "resolved_at": "2026-11-07T15:26:24.733197",
+    "tags": [
+      "vpn",
+      "cisco",
+      "anyconnect",
+      "network",
+      "l1"
+    ]
+  },
+  "TICK-103": {
+    "id": "TICK-103",
+    "title": "VPN Split-Tunneling DNS Leak & Internal Host Resolution Failure",
+    "description": "Connected to VPN but cannot resolve internal intranet hosts like `git.corp.local` or `jira.corp.local`. External websites work normally.",
+    "client_name": "Elena Rostova",
+    "priority": "Medium",
+    "category": "L1",
+    "status": "RESOLVED_AUTONOMOUSLY",
+    "error_signature": "VPN_DNS_LEAK_INTERNAL_DOMAIN_RESOLUTION_FAILURE",
+    "resolution_steps": "1. Re-prioritize network adapter binding order placing TAP-Windows Adapter on top\n2. Add corporate DNS suffix list `corp.local, corp.internal` into IPv4 adapter properties\n3. Flush client resolver cache (`ipconfig /flushdns`)\n4. DNS lookup for `git.corp.local` correctly resolves to internal IP 10.20.4.15.",
+    "confidence_score": 0.96,
+    "resolution_type": "AUTONOMOUS",
+    "execution_result": {
+      "success": true,
+      "steps_executed": [
+        "Re-prioritize network adapter binding order placing TAP-Windows Adapter on top",
+        "Add corporate DNS suffix list `corp.local, corp.internal` into IPv4 adapter properties",
+        "Flush client resolver cache (`ipconfig /flushdns`)",
+        "DNS lookup for `git.corp.local` correctly resolves to internal IP 10.20.4.15."
+      ],
+      "simulated_output": [
+        "[INIT] Autofix-AI Autonomous Execution Engine v2.4",
+        "[TARGET] Ticket: TICK-103 | Execution Mode: Containerized Sandbox",
+        "[TIMESTAMP] 2026-11-07 09:56:24 UTC",
+        "---",
+        "[STEP 1/4] Re-prioritize network adapter binding order placing TAP-Windows Adapter on top",
+        "  [EXEC] Verifying endpoint state: 'Re-prioritize network adapter binding order placin' -> Completed with code 0 (Success).",
+        "[STEP 2/4] Add corporate DNS suffix list `corp.local, corp.internal` into IPv4 adapter properties",
+        "  [EXEC] ipconfig /flushdns -> Windows IP Configuration: Successfully flushed the DNS Resolver Cache.",
+        "[STEP 3/4] Flush client resolver cache (`ipconfig /flushdns`)",
+        "  [EXEC] ipconfig /flushdns -> Windows IP Configuration: Successfully flushed the DNS Resolver Cache.",
+        "[STEP 4/4] DNS lookup for `git.corp.local` correctly resolves to internal IP 10.20.4.15.",
+        "  [EXEC] ipconfig /flushdns -> Windows IP Configuration: Successfully flushed the DNS Resolver Cache.",
+        "---",
+        "[VERIFY] Remediation pipeline executed successfully. All health probes: PASS (200 OK)."
+      ],
+      "execution_time_ms": 165,
+      "notes": "Remediation verified for ticket TICK-103 across 4 automated phases."
+    },
+    "diagnostic_insights": {
+      "matched_pattern_title": "Cisco AnyConnect Tunnel Gateway Timeout & Routing Drop",
+      "matched_ticket_id": "TICK-103",
+      "confidence_percent": 96,
+      "detected_signature": "VPN_DNS_LEAK_INTERNAL_DOMAIN_RESOLUTION_FAILURE",
+      "root_cause_analysis": "Local Windows Socket stack corruption or TAP-Windows network adapter binding priority drop preventing DHCP pool gateway address assignment.",
+      "recommended_solution": "1. Re-prioritize network adapter binding order placing TAP-Windows Adapter on top\n2. Add corporate DNS suffix list `corp.local, corp.internal` into IPv4 adapter properties\n3. Flush client resolver cache (`ipconfig /flushdns`)\n4. DNS lookup for `git.corp.local` correctly resolves to internal IP 10.20.4.15.",
+      "prevention_tip": "Update Cisco AnyConnect client to v4.10+ to prevent split-tunnel routing conflicts."
+    },
+    "messages": [
+      {
+        "id": "MSG-b6085c",
+        "sender": "Elena Rostova",
+        "role": "user",
+        "content": "Connected to VPN but cannot resolve internal intranet hosts like `git.corp.local` or `jira.corp.local`. External websites work normally.",
+        "timestamp": "2026-11-07T15:26:24.733197"
+      },
+      {
+        "id": "MSG-4e8785",
+        "sender": "Hindsight Agent",
+        "role": "agent",
+        "content": "\ud83e\udd16 Diagnostic Intelligence:\n\u2022 Matched Pattern: Cisco AnyConnect Tunnel Gateway Timeout & Routing Drop (96% confidence)\n\u2022 Root Cause: Local Windows Socket stack corruption or TAP-Windows network adapter binding priority drop preventing DHCP pool gateway address assignment.\n\nActionable Remediation Protocol:\n1. Re-prioritize network adapter binding order placing TAP-Windows Adapter on top\n2. Add corporate DNS suffix list `corp.local, corp.internal` into IPv4 adapter properties\n3. Flush client resolver cache (`ipconfig /flushdns`)\n4. DNS lookup for `git.corp.local` correctly resolves to internal IP 10.20.4.15.",
+        "timestamp": "2026-11-07T15:26:24.733197"
+      }
+    ],
+    "screenshot_preview": null,
+    "company_id": "acme-corp",
+    "created_at": "2026-11-07T14:56:24.733197",
+    "resolved_at": "2026-11-07T15:26:24.733197",
+    "tags": [
+      "vpn",
+      "dns",
+      "network",
+      "windows",
+      "l1"
+    ]
+  },
+  "TICK-104": {
+    "id": "TICK-104",
+    "title": "Outlook SSO Redirect Loop & Credential Prompt Storm",
+    "description": "Outlook desktop client keeps prompting for Microsoft 365 credentials in a modal popup loop every 5 seconds without accepting password.",
+    "client_name": "Sarah Jenkins",
+    "priority": "High",
+    "category": "L1",
+    "status": "RESOLVED_HUMAN_VERIFIED",
+    "error_signature": "OUTLOOK_M365_AADSTS50076_MFA_TOKEN_REFRESH_LOOP",
+    "resolution_steps": "1. Close Outlook and disconnect work account from Windows Settings -> Accounts -> Access work or school\n2. Clear Microsoft Identity credentials from Windows Credential Manager under `Generic Credentials`\n3. Delete cached token files under `%localappdata%\\Packages\\Microsoft.AAD.BrokerPlugin_cw5n1h2txyewy`\n4. Re-authenticate with Authenticator App push notification; Outlook sync restored.",
+    "confidence_score": 0.82,
+    "resolution_type": "HUMAN_IN_THE_LOOP",
+    "execution_result": {
+      "success": true,
+      "steps_executed": [
+        "Close Outlook and disconnect work account from Windows Settings -> Accounts -> Access work or school",
+        "Clear Microsoft Identity credentials from Windows Credential Manager under `Generic Credentials`",
+        "Delete cached token files under `%localappdata%\\Packages\\Microsoft.AAD.BrokerPlugin_cw5n1h2txyewy`",
+        "Re-authenticate with Authenticator App push notification; Outlook sync restored."
+      ],
+      "simulated_output": [
+        "[INIT] Autofix-AI Autonomous Execution Engine v2.4",
+        "[TARGET] Ticket: TICK-104 | Execution Mode: Containerized Sandbox",
+        "[TIMESTAMP] 2026-11-07 09:56:24 UTC",
+        "---",
+        "[STEP 1/4] Close Outlook and disconnect work account from Windows Settings -> Accounts -> Access work or school",
+        "  [EXEC] outlook /cleanreminders -> Mailbox OST cache re-indexed against Exchange Online endpoint.",
+        "[STEP 2/4] Clear Microsoft Identity credentials from Windows Credential Manager under `Generic Credentials`",
+        "  [EXEC] Synchronizing identity state: 'Clear Microsoft Identity credentials from Windows' -> Completed with code 0 (Success).",
+        "[STEP 3/4] Delete cached token files under `%localappdata%\\Packages\\Microsoft.AAD.BrokerPlugin_cw5n1h2txyewy`",
+        "  [EXEC] Running diagnostics: 'Delete cached token files under `%localappdata%\\Pa' -> Completed with code 0 (Success).",
+        "[STEP 4/4] Re-authenticate with Authenticator App push notification; Outlook sync restored.",
+        "  [EXEC] outlook /cleanreminders -> Mailbox OST cache re-indexed against Exchange Online endpoint.",
+        "---",
+        "[VERIFY] Remediation pipeline executed successfully. All health probes: PASS (200 OK)."
+      ],
+      "execution_time_ms": 209,
+      "notes": "Remediation verified for ticket TICK-104 across 4 automated phases."
+    },
+    "diagnostic_insights": {
+      "matched_pattern_title": "Salesforce & Okta SAML 401 Clock Skew / Stale Assertion",
+      "matched_ticket_id": "TICK-104",
+      "confidence_percent": 82,
+      "detected_signature": "OUTLOOK_M365_AADSTS50076_MFA_TOKEN_REFRESH_LOOP",
+      "root_cause_analysis": "SAML response validation failed due to client-server NTP time drift or stale multi-factor authentication tokens in the identity provider cache.",
+      "recommended_solution": "1. Close Outlook and disconnect work account from Windows Settings -> Accounts -> Access work or school\n2. Clear Microsoft Identity credentials from Windows Credential Manager under `Generic Credentials`\n3. Delete cached token files under `%localappdata%\\Packages\\Microsoft.AAD.BrokerPlugin_cw5n1h2txyewy`\n4. Re-authenticate with Authenticator App push notification; Outlook sync restored.",
+      "prevention_tip": "Ensure domain controller NTP synchronization policy is enforced across all client endpoints."
+    },
+    "messages": [
+      {
+        "id": "MSG-8f56f0",
+        "sender": "Sarah Jenkins",
+        "role": "user",
+        "content": "Outlook desktop client keeps prompting for Microsoft 365 credentials in a modal popup loop every 5 seconds without accepting password.",
+        "timestamp": "2026-11-07T15:26:24.733197"
+      },
+      {
+        "id": "MSG-a950f5",
+        "sender": "Hindsight Agent",
+        "role": "agent",
+        "content": "\ud83e\udd16 Diagnostic Intelligence:\n\u2022 Matched Pattern: Salesforce & Okta SAML 401 Clock Skew / Stale Assertion (82% confidence)\n\u2022 Root Cause: SAML response validation failed due to client-server NTP time drift or stale multi-factor authentication tokens in the identity provider cache.\n\nActionable Remediation Protocol:\n1. Close Outlook and disconnect work account from Windows Settings -> Accounts -> Access work or school\n2. Clear Microsoft Identity credentials from Windows Credential Manager under `Generic Credentials`\n3. Delete cached token files under `%localappdata%\\Packages\\Microsoft.AAD.BrokerPlugin_cw5n1h2txyewy`\n4. Re-authenticate with Authenticator App push notification; Outlook sync restored.",
+        "timestamp": "2026-11-07T15:26:24.733197"
+      }
+    ],
+    "screenshot_preview": null,
+    "company_id": "acme-corp",
+    "created_at": "2026-11-07T14:56:24.733197",
+    "resolved_at": "2026-11-07T15:26:24.733197",
+    "tags": [
+      "outlook",
+      "m365",
+      "sso",
+      "azure-ad",
+      "mfa"
+    ]
+  },
+  "TICK-105": {
+    "id": "TICK-105",
+    "title": "Azure AD Password Expiration Sync Lockout across Devices",
+    "description": "Password was updated on web portal 2 hours ago, but MacBook and mobile phone are locked out with 'Invalid credentials' on Kerberos ticket.",
+    "client_name": "Chris Miller",
+    "priority": "Medium",
+    "category": "L1",
+    "status": "RESOLVED_AUTONOMOUSLY",
+    "error_signature": "AZURE_AD_PASSWORD_SYNC_LDAP_DATA_532_EXPIRED",
+    "resolution_steps": "1. Force Azure AD Connect delta synchronization via PowerShell: `Start-ADSyncSyncCycle -PolicyType Delta`\n2. Verify synchronization status in Azure AD Connect Synchronization Service Manager\n3. Purge Kerberos tickets on affected workstation (`klist purge`)\n4. Re-issue TGT ticket with updated credential.",
+    "confidence_score": 0.96,
+    "resolution_type": "AUTONOMOUS",
+    "execution_result": {
+      "success": true,
+      "steps_executed": [
+        "Force Azure AD Connect delta synchronization via PowerShell: `Start-ADSyncSyncCycle -PolicyType Delta`",
+        "Verify synchronization status in Azure AD Connect Synchronization Service Manager",
+        "Purge Kerberos tickets on affected workstation (`klist purge`)",
+        "Re-issue TGT ticket with updated credential."
+      ],
+      "simulated_output": [
+        "[INIT] Autofix-AI Autonomous Execution Engine v2.4",
+        "[TARGET] Ticket: TICK-105 | Execution Mode: Containerized Sandbox",
+        "[TIMESTAMP] 2026-11-07 09:56:24 UTC",
+        "---",
+        "[STEP 1/4] Force Azure AD Connect delta synchronization via PowerShell: `Start-ADSyncSyncCycle -PolicyType Delta`",
+        "  [EXEC] Applying automated patch: 'Force Azure AD Connect delta synchronization via P' -> Completed with code 0 (Success).",
+        "[STEP 2/4] Verify synchronization status in Azure AD Connect Synchronization Service Manager",
+        "  [EXEC] Verifying endpoint state: 'Verify synchronization status in Azure AD Connect' -> Completed with code 0 (Success).",
+        "[STEP 3/4] Purge Kerberos tickets on affected workstation (`klist purge`)",
+        "  [EXEC] Synchronizing identity state: 'Purge Kerberos tickets on affected workstation (`k' -> Completed with code 0 (Success).",
+        "[STEP 4/4] Re-issue TGT ticket with updated credential.",
+        "  [EXEC] Running diagnostics: 'Re-issue TGT ticket with updated credential.' -> Completed with code 0 (Success).",
+        "---",
+        "[VERIFY] Remediation pipeline executed successfully. All health probes: PASS (200 OK)."
+      ],
+      "execution_time_ms": 356,
+      "notes": "Remediation verified for ticket TICK-105 across 4 automated phases."
+    },
+    "diagnostic_insights": {
+      "matched_pattern_title": "Active Directory Account Lockout & Kerberos Ticket Expiry",
+      "matched_ticket_id": "TICK-105",
+      "confidence_percent": 96,
+      "detected_signature": "AZURE_AD_PASSWORD_SYNC_LDAP_DATA_532_EXPIRED",
+      "root_cause_analysis": "Cached network credentials on a secondary mobile device triggered repeated failed auth attempts, hitting the 5-attempt lockout policy.",
+      "recommended_solution": "1. Force Azure AD Connect delta synchronization via PowerShell: `Start-ADSyncSyncCycle -PolicyType Delta`\n2. Verify synchronization status in Azure AD Connect Synchronization Service Manager\n3. Purge Kerberos tickets on affected workstation (`klist purge`)\n4. Re-issue TGT ticket with updated credential.",
+      "prevention_tip": "Configure Intune conditional access to quarantine outdated mobile device tokens."
+    },
+    "messages": [
+      {
+        "id": "MSG-744077",
+        "sender": "Chris Miller",
+        "role": "user",
+        "content": "Password was updated on web portal 2 hours ago, but MacBook and mobile phone are locked out with 'Invalid credentials' on Kerberos ticket.",
+        "timestamp": "2026-11-07T15:26:24.734198"
+      },
+      {
+        "id": "MSG-766131",
+        "sender": "Hindsight Agent",
+        "role": "agent",
+        "content": "\ud83e\udd16 Diagnostic Intelligence:\n\u2022 Matched Pattern: Active Directory Account Lockout & Kerberos Ticket Expiry (96% confidence)\n\u2022 Root Cause: Cached network credentials on a secondary mobile device triggered repeated failed auth attempts, hitting the 5-attempt lockout policy.\n\nActionable Remediation Protocol:\n1. Force Azure AD Connect delta synchronization via PowerShell: `Start-ADSyncSyncCycle -PolicyType Delta`\n2. Verify synchronization status in Azure AD Connect Synchronization Service Manager\n3. Purge Kerberos tickets on affected workstation (`klist purge`)\n4. Re-issue TGT ticket with updated credential.",
+        "timestamp": "2026-11-07T15:26:24.734198"
+      }
+    ],
+    "screenshot_preview": null,
+    "company_id": "acme-corp",
+    "created_at": "2026-11-07T14:56:24.734198",
+    "resolved_at": "2026-11-07T15:26:24.734198",
+    "tags": [
+      "azure-ad",
+      "password",
+      "sync",
+      "kerberos",
+      "l1"
+    ]
+  },
+  "TICK-106": {
+    "id": "TICK-106",
+    "title": "Outlook Calendar Sync Stalled & OST Data File Corruption",
+    "description": "Executive calendar invites are not syncing to desktop Outlook. Send/Receive error 0x8004010F reported.",
+    "client_name": "David Kim",
+    "priority": "Low",
+    "category": "L1",
+    "status": "RESOLVED_AUTONOMOUSLY",
+    "error_signature": "OUTLOOK_OST_CORRUPT_ERROR_0X8004010F",
+    "resolution_steps": "1. Terminate `outlook.exe` background processes\n2. Rename damaged OST file to `dkim@corp.com.ost.old`\n3. Launch Outlook with switch `outlook.exe /cleanreminders /resetnavpane`\n4. Outlook automatically re-created fresh OST cache from Exchange server.",
+    "confidence_score": 0.96,
+    "resolution_type": "AUTONOMOUS",
+    "execution_result": {
+      "success": true,
+      "steps_executed": [
+        "Terminate `outlook.exe` background processes",
+        "Rename damaged OST file to `dkim@corp.com.ost.old`",
+        "Launch Outlook with switch `outlook.exe /cleanreminders /resetnavpane`",
+        "Outlook automatically re-created fresh OST cache from Exchange server."
+      ],
+      "simulated_output": [
+        "[INIT] Autofix-AI Autonomous Execution Engine v2.4",
+        "[TARGET] Ticket: TICK-106 | Execution Mode: Containerized Sandbox",
+        "[TIMESTAMP] 2026-11-07 09:56:24 UTC",
+        "---",
+        "[STEP 1/4] Terminate `outlook.exe` background processes",
+        "  [EXEC] outlook /cleanreminders -> Mailbox OST cache re-indexed against Exchange Online endpoint.",
+        "[STEP 2/4] Rename damaged OST file to `dkim@corp.com.ost.old`",
+        "  [EXEC] outlook /cleanreminders -> Mailbox OST cache re-indexed against Exchange Online endpoint.",
+        "[STEP 3/4] Launch Outlook with switch `outlook.exe /cleanreminders /resetnavpane`",
+        "  [EXEC] outlook /cleanreminders -> Mailbox OST cache re-indexed against Exchange Online endpoint.",
+        "[STEP 4/4] Outlook automatically re-created fresh OST cache from Exchange server.",
+        "  [EXEC] outlook /cleanreminders -> Mailbox OST cache re-indexed against Exchange Online endpoint.",
+        "---",
+        "[VERIFY] Remediation pipeline executed successfully. All health probes: PASS (200 OK)."
+      ],
+      "execution_time_ms": 178,
+      "notes": "Remediation verified for ticket TICK-106 across 4 automated phases."
+    },
+    "diagnostic_insights": {
+      "matched_pattern_title": "Outlook MAPI Profile Corruption & OST Synchronization Lock",
+      "matched_ticket_id": "TICK-106",
+      "confidence_percent": 96,
+      "detected_signature": "OUTLOOK_OST_CORRUPT_ERROR_0X8004010F",
+      "root_cause_analysis": "Corrupt offline Outlook storage file (.ost) locking the background Exchange MAPI synchronization thread.",
+      "recommended_solution": "1. Terminate `outlook.exe` background processes\n2. Rename damaged OST file to `dkim@corp.com.ost.old`\n3. Launch Outlook with switch `outlook.exe /cleanreminders /resetnavpane`\n4. Outlook automatically re-created fresh OST cache from Exchange server.",
+      "prevention_tip": "Deploy group policy to limit offline cache duration to 6 months."
+    },
+    "messages": [
+      {
+        "id": "MSG-5afd8f",
+        "sender": "David Kim",
+        "role": "user",
+        "content": "Executive calendar invites are not syncing to desktop Outlook. Send/Receive error 0x8004010F reported.",
+        "timestamp": "2026-11-07T15:26:24.734198"
+      },
+      {
+        "id": "MSG-fdfecd",
+        "sender": "Hindsight Agent",
+        "role": "agent",
+        "content": "\ud83e\udd16 Diagnostic Intelligence:\n\u2022 Matched Pattern: Outlook MAPI Profile Corruption & OST Synchronization Lock (96% confidence)\n\u2022 Root Cause: Corrupt offline Outlook storage file (.ost) locking the background Exchange MAPI synchronization thread.\n\nActionable Remediation Protocol:\n1. Terminate `outlook.exe` background processes\n2. Rename damaged OST file to `dkim@corp.com.ost.old`\n3. Launch Outlook with switch `outlook.exe /cleanreminders /resetnavpane`\n4. Outlook automatically re-created fresh OST cache from Exchange server.",
+        "timestamp": "2026-11-07T15:26:24.734198"
+      }
+    ],
+    "screenshot_preview": null,
+    "company_id": "acme-corp",
+    "created_at": "2026-11-07T14:56:24.734198",
+    "resolved_at": "2026-11-07T15:26:24.734198",
+    "tags": [
+      "outlook",
+      "ost",
+      "exchange",
+      "calendar",
+      "l1"
+    ]
+  },
+  "TICK-107": {
+    "id": "TICK-107",
+    "title": "Office 365 Shared Mailbox Missing Permissions after Org Move",
+    "description": "Employee transferred to Finance department cannot open the `billing-inquiries@corp.com` shared mailbox.",
+    "client_name": "Rachel Adams",
+    "priority": "Low",
+    "category": "L1",
+    "status": "RESOLVED_HUMAN_VERIFIED",
+    "error_signature": "M365_SHARED_MAILBOX_ACCESS_DENIED_PERMISSIONS_SYNC",
+    "resolution_steps": "1. Execute Exchange Online PowerShell command: `Add-MailboxPermission -Identity 'billing-inquiries@corp.com' -User 'radams@corp.com' -AccessRights FullAccess -InheritanceType All -AutoMapping $true`\n2. Run `Add-RecipientPermission -Identity 'billing-inquiries@corp.com' -Trustee 'radams@corp.com' -AccessRights SendAs`\n3. Wait 10 minutes for M365 replication; verified mailbox mounted.",
+    "confidence_score": 0.82,
+    "resolution_type": "HUMAN_IN_THE_LOOP",
+    "execution_result": {
+      "success": true,
+      "steps_executed": [
+        "Execute Exchange Online PowerShell command: `Add-MailboxPermission -Identity 'billing-inquiries@corp.com' -User 'radams@corp.com' -AccessRights FullAccess -InheritanceType All -AutoMapping $true`",
+        "Run `Add-RecipientPermission -Identity 'billing-inquiries@corp.com' -Trustee 'radams@corp.com' -AccessRights SendAs`",
+        "Wait 10 minutes for M365 replication; verified mailbox mounted."
+      ],
+      "simulated_output": [
+        "[INIT] Autofix-AI Autonomous Execution Engine v2.4",
+        "[TARGET] Ticket: TICK-107 | Execution Mode: Containerized Sandbox",
+        "[TIMESTAMP] 2026-11-07 09:56:24 UTC",
+        "---",
+        "[STEP 1/3] Execute Exchange Online PowerShell command: `Add-MailboxPermission -Identity 'billing-inquiries@corp.com' -User 'radams@corp.com' -AccessRights FullAccess -InheritanceType All -AutoMapping $true`",
+        "  [EXEC] Applying automated patch: 'Execute Exchange Online PowerShell command: `Add-M' -> Completed with code 0 (Success).",
+        "[STEP 2/3] Run `Add-RecipientPermission -Identity 'billing-inquiries@corp.com' -Trustee 'radams@corp.com' -AccessRights SendAs`",
+        "  [EXEC] w32tm /resync /force -> Sending resync command to local computer... The command completed successfully (Offset: 0.0012s).",
+        "[STEP 3/3] Wait 10 minutes for M365 replication; verified mailbox mounted.",
+        "  [EXEC] Synchronizing identity state: 'Wait 10 minutes for M365 replication; verified mai' -> Completed with code 0 (Success).",
+        "---",
+        "[VERIFY] Remediation pipeline executed successfully. All health probes: PASS (200 OK)."
+      ],
+      "execution_time_ms": 152,
+      "notes": "Remediation verified for ticket TICK-107 across 3 automated phases."
+    },
+    "diagnostic_insights": {
+      "matched_pattern_title": "Outlook MAPI Profile Corruption & OST Synchronization Lock",
+      "matched_ticket_id": "TICK-107",
+      "confidence_percent": 82,
+      "detected_signature": "M365_SHARED_MAILBOX_ACCESS_DENIED_PERMISSIONS_SYNC",
+      "root_cause_analysis": "Corrupt offline Outlook storage file (.ost) locking the background Exchange MAPI synchronization thread.",
+      "recommended_solution": "1. Execute Exchange Online PowerShell command: `Add-MailboxPermission -Identity 'billing-inquiries@corp.com' -User 'radams@corp.com' -AccessRights FullAccess -InheritanceType All -AutoMapping $true`\n2. Run `Add-RecipientPermission -Identity 'billing-inquiries@corp.com' -Trustee 'radams@corp.com' -AccessRights SendAs`\n3. Wait 10 minutes for M365 replication; verified mailbox mounted.",
+      "prevention_tip": "Deploy group policy to limit offline cache duration to 6 months."
+    },
+    "messages": [
+      {
+        "id": "MSG-b305ba",
+        "sender": "Rachel Adams",
+        "role": "user",
+        "content": "Employee transferred to Finance department cannot open the `billing-inquiries@corp.com` shared mailbox.",
+        "timestamp": "2026-11-07T15:26:24.734198"
+      },
+      {
+        "id": "MSG-c2c1cb",
+        "sender": "Hindsight Agent",
+        "role": "agent",
+        "content": "\ud83e\udd16 Diagnostic Intelligence:\n\u2022 Matched Pattern: Outlook MAPI Profile Corruption & OST Synchronization Lock (82% confidence)\n\u2022 Root Cause: Corrupt offline Outlook storage file (.ost) locking the background Exchange MAPI synchronization thread.\n\nActionable Remediation Protocol:\n1. Execute Exchange Online PowerShell command: `Add-MailboxPermission -Identity 'billing-inquiries@corp.com' -User 'radams@corp.com' -AccessRights FullAccess -InheritanceType All -AutoMapping $true`\n2. Run `Add-RecipientPermission -Identity 'billing-inquiries@corp.com' -Trustee 'radams@corp.com' -AccessRights SendAs`\n3. Wait 10 minutes for M365 replication; verified mailbox mounted.",
+        "timestamp": "2026-11-07T15:26:24.734198"
+      }
+    ],
+    "screenshot_preview": null,
+    "company_id": "acme-corp",
+    "created_at": "2026-11-07T14:56:24.734198",
+    "resolved_at": "2026-11-07T15:26:24.734198",
+    "tags": [
+      "office365",
+      "mailbox",
+      "permissions",
+      "exchange",
+      "l1"
+    ]
+  },
+  "TICK-108": {
+    "id": "TICK-108",
+    "title": "FollowMe Network Printer Drops Mapping after DHCP Lease Renewal",
+    "description": "Floor 3 Xerox FollowMe printer shows 'Offline' status on multiple workstations after the morning network DHCP lease update.",
+    "client_name": "Bob Lewis",
+    "priority": "Medium",
+    "category": "L1",
+    "status": "RESOLVED_AUTONOMOUSLY",
+    "error_signature": "NETWORK_PRINTER_OFFLINE_WSD_PORT_DHCP_LEASE_DROP",
+    "resolution_steps": "1. Change printer port from dynamic WSD to Standard TCP/IP Port bound to static DNS `xerox-fl3.printers.corp`\n2. Restart Print Spooler service on printserver: `Restart-Service Spooler -Force`\n3. Clear stuck documents in `C:\\Windows\\System32\\spool\\PRINTERS`\n4. Sent test page; print job finished successfully.",
+    "confidence_score": 0.96,
+    "resolution_type": "AUTONOMOUS",
+    "execution_result": {
+      "success": true,
+      "steps_executed": [
+        "Change printer port from dynamic WSD to Standard TCP/IP Port bound to static DNS `xerox-fl3.printers.corp`",
+        "Restart Print Spooler service on printserver: `Restart-Service Spooler -Force`",
+        "Clear stuck documents in `C:\\Windows\\System32\\spool\\PRINTERS`",
+        "Sent test page; print job finished successfully."
+      ],
+      "simulated_output": [
+        "[INIT] Autofix-AI Autonomous Execution Engine v2.4",
+        "[TARGET] Ticket: TICK-108 | Execution Mode: Containerized Sandbox",
+        "[TIMESTAMP] 2026-11-07 09:56:24 UTC",
+        "---",
+        "[STEP 1/4] Change printer port from dynamic WSD to Standard TCP/IP Port bound to static DNS `xerox-fl3.printers.corp`",
+        "  [EXEC] ipconfig /flushdns -> Windows IP Configuration: Successfully flushed the DNS Resolver Cache.",
+        "[STEP 2/4] Restart Print Spooler service on printserver: `Restart-Service Spooler -Force`",
+        "  [EXEC] net stop spooler && net start spooler -> Print Spooler service stopped and restarted successfully.",
+        "[STEP 3/4] Clear stuck documents in `C:\\Windows\\System32\\spool\\PRINTERS`",
+        "  [EXEC] net stop spooler && net start spooler -> Print Spooler service stopped and restarted successfully.",
+        "[STEP 4/4] Sent test page; print job finished successfully.",
+        "  [EXEC] Applying automated patch: 'Sent test page; print job finished successfully.' -> Completed with code 0 (Success).",
+        "---",
+        "[VERIFY] Remediation pipeline executed successfully. All health probes: PASS (200 OK)."
+      ],
+      "execution_time_ms": 269,
+      "notes": "Remediation verified for ticket TICK-108 across 4 automated phases."
+    },
+    "diagnostic_insights": {
+      "matched_pattern_title": "FollowMe Network Printer Dynamic WSD Port Disconnect",
+      "matched_ticket_id": "TICK-108",
+      "confidence_percent": 96,
+      "detected_signature": "NETWORK_PRINTER_OFFLINE_WSD_PORT_DHCP_LEASE_DROP",
+      "root_cause_analysis": "Network DHCP lease renewal reassigned the physical printer IP address while workstations were bound to dynamic WSD ports.",
+      "recommended_solution": "1. Change printer port from dynamic WSD to Standard TCP/IP Port bound to static DNS `xerox-fl3.printers.corp`\n2. Restart Print Spooler service on printserver: `Restart-Service Spooler -Force`\n3. Clear stuck documents in `C:\\Windows\\System32\\spool\\PRINTERS`\n4. Sent test page; print job finished successfully.",
+      "prevention_tip": "Reserve static DHCP bindings for all enterprise floor printers."
+    },
+    "messages": [
+      {
+        "id": "MSG-67237a",
+        "sender": "Bob Lewis",
+        "role": "user",
+        "content": "Floor 3 Xerox FollowMe printer shows 'Offline' status on multiple workstations after the morning network DHCP lease update.",
+        "timestamp": "2026-11-07T15:26:24.734198"
+      },
+      {
+        "id": "MSG-edcee7",
+        "sender": "Hindsight Agent",
+        "role": "agent",
+        "content": "\ud83e\udd16 Diagnostic Intelligence:\n\u2022 Matched Pattern: FollowMe Network Printer Dynamic WSD Port Disconnect (96% confidence)\n\u2022 Root Cause: Network DHCP lease renewal reassigned the physical printer IP address while workstations were bound to dynamic WSD ports.\n\nActionable Remediation Protocol:\n1. Change printer port from dynamic WSD to Standard TCP/IP Port bound to static DNS `xerox-fl3.printers.corp`\n2. Restart Print Spooler service on printserver: `Restart-Service Spooler -Force`\n3. Clear stuck documents in `C:\\Windows\\System32\\spool\\PRINTERS`\n4. Sent test page; print job finished successfully.",
+        "timestamp": "2026-11-07T15:26:24.734198"
+      }
+    ],
+    "screenshot_preview": null,
+    "company_id": "acme-corp",
+    "created_at": "2026-11-07T14:56:24.734198",
+    "resolved_at": "2026-11-07T15:26:24.734198",
+    "tags": [
+      "printer",
+      "network",
+      "xerox",
+      "spooler",
+      "l1"
+    ]
+  },
+  "TICK-109": {
+    "id": "TICK-109",
+    "title": "Oracle DB Connection Pool Timeout (ORA-12154 TNS could not resolve service name)",
+    "description": "Production billing microservice throws ORA-12154 when scaling new replicas in Kubernetes cluster.",
+    "client_name": "Priya Sharma",
+    "priority": "Critical",
+    "category": "L2",
+    "status": "RESOLVED_HUMAN_VERIFIED",
+    "error_signature": "ORACLE_DB_ORA_12154_TNS_NAMES_MISSING_CONFIGMAP",
+    "resolution_steps": "1. Inspect Kubernetes ConfigMap `oracle-tnsnames` mounted at `/opt/oracle/network/admin`\n2. Fix missing net service descriptor for `BILLING_PROD_RAC` in `tnsnames.ora`\n3. Execute zero-downtime rolling restart: `kubectl rollout restart deployment/billing-service -n core`\n4. Verified HikariCP pool initialized with 20 active connections.",
+    "confidence_score": 0.82,
+    "resolution_type": "HUMAN_IN_THE_LOOP",
+    "execution_result": {
+      "success": true,
+      "steps_executed": [
+        "Inspect Kubernetes ConfigMap `oracle-tnsnames` mounted at `/opt/oracle/network/admin`",
+        "Fix missing net service descriptor for `BILLING_PROD_RAC` in `tnsnames.ora`",
+        "Execute zero-downtime rolling restart: `kubectl rollout restart deployment/billing-service -n core`",
+        "Verified HikariCP pool initialized with 20 active connections."
+      ],
+      "simulated_output": [
+        "[INIT] Autofix-AI Autonomous Execution Engine v2.4",
+        "[TARGET] Ticket: TICK-109 | Execution Mode: Containerized Sandbox",
+        "[TIMESTAMP] 2026-11-07 09:56:24 UTC",
+        "---",
+        "[STEP 1/4] Inspect Kubernetes ConfigMap `oracle-tnsnames` mounted at `/opt/oracle/network/admin`",
+        "  [EXEC] db-pool-check -> Connection pool verified. Active: 12, Idle: 8, Max: 50. Handshake ping: 1.4ms.",
+        "[STEP 2/4] Fix missing net service descriptor for `BILLING_PROD_RAC` in `tnsnames.ora`",
+        "  [EXEC] db-pool-check -> Connection pool verified. Active: 12, Idle: 8, Max: 50. Handshake ping: 1.4ms.",
+        "[STEP 3/4] Execute zero-downtime rolling restart: `kubectl rollout restart deployment/billing-service -n core`",
+        "  [EXEC] kubectl rollout restart deployment -> deployment.apps/core-service restarted. 3/3 pods ready (24s).",
+        "[STEP 4/4] Verified HikariCP pool initialized with 20 active connections.",
+        "  [EXEC] Synchronizing identity state: 'Verified HikariCP pool initialized with 20 active' -> Completed with code 0 (Success).",
+        "---",
+        "[VERIFY] Remediation pipeline executed successfully. All health probes: PASS (200 OK)."
+      ],
+      "execution_time_ms": 331,
+      "notes": "Remediation verified for ticket TICK-109 across 4 automated phases."
+    },
+    "diagnostic_insights": {
+      "matched_pattern_title": "Kubernetes Pod CrashLoopBackOff via Memory OOMKilled (Exit 137)",
+      "matched_ticket_id": "TICK-109",
+      "confidence_percent": 82,
+      "detected_signature": "ORACLE_DB_ORA_12154_TNS_NAMES_MISSING_CONFIGMAP",
+      "root_cause_analysis": "Containerized JVM or worker process exceeded hard cgroup memory limits, triggering Linux kernel Out-Of-Memory killer.",
+      "recommended_solution": "1. Inspect Kubernetes ConfigMap `oracle-tnsnames` mounted at `/opt/oracle/network/admin`\n2. Fix missing net service descriptor for `BILLING_PROD_RAC` in `tnsnames.ora`\n3. Execute zero-downtime rolling restart: `kubectl rollout restart deployment/billing-service -n core`\n4. Verified HikariCP pool initialized with 20 active connections.",
+      "prevention_tip": "Set up Prometheus memory alerts at 85% consumption threshold to avoid unexpected OOM termination."
+    },
+    "messages": [
+      {
+        "id": "MSG-08b42c",
+        "sender": "Priya Sharma",
+        "role": "user",
+        "content": "Production billing microservice throws ORA-12154 when scaling new replicas in Kubernetes cluster.",
+        "timestamp": "2026-11-07T15:26:24.734198"
+      },
+      {
+        "id": "MSG-e2e5b6",
+        "sender": "Hindsight Agent",
+        "role": "agent",
+        "content": "\ud83e\udd16 Diagnostic Intelligence:\n\u2022 Matched Pattern: Kubernetes Pod CrashLoopBackOff via Memory OOMKilled (Exit 137) (82% confidence)\n\u2022 Root Cause: Containerized JVM or worker process exceeded hard cgroup memory limits, triggering Linux kernel Out-Of-Memory killer.\n\nActionable Remediation Protocol:\n1. Inspect Kubernetes ConfigMap `oracle-tnsnames` mounted at `/opt/oracle/network/admin`\n2. Fix missing net service descriptor for `BILLING_PROD_RAC` in `tnsnames.ora`\n3. Execute zero-downtime rolling restart: `kubectl rollout restart deployment/billing-service -n core`\n4. Verified HikariCP pool initialized with 20 active connections.",
+        "timestamp": "2026-11-07T15:26:24.734198"
+      }
+    ],
+    "screenshot_preview": null,
+    "company_id": "acme-corp",
+    "created_at": "2026-11-07T14:56:24.734198",
+    "resolved_at": "2026-11-07T15:26:24.734198",
+    "tags": [
+      "oracle",
+      "database",
+      "ora-12154",
+      "kubernetes",
+      "l2",
+      "critical"
+    ]
+  },
+  "TICK-110": {
+    "id": "TICK-110",
+    "title": "PostgreSQL Staging Connection Pool Exhaustion (FATAL: remaining connection slots reserved)",
+    "description": "Integration test runner fails with 'FATAL: remaining connection slots are reserved for non-replication superuser connections'.",
+    "client_name": "Alex Chen",
+    "priority": "High",
+    "category": "L2",
+    "status": "RESOLVED_AUTONOMOUSLY",
+    "error_signature": "POSTGRES_CONNECTION_POOL_EXHAUSTION_IDLE_IN_TRANSACTION",
+    "resolution_steps": "1. Identify and terminate zombie test transactions: `SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE state = 'idle in transaction' AND state_change < now() - INTERVAL '5 minutes';`\n2. Configure PgBouncer transaction-mode pooling with `max_client_conn = 500`\n3. Enforce `idle_in_transaction_session_timeout = '60000'` in postgresql.conf\n4. Database active connections dropped to 14; staging tests resumed.",
+    "confidence_score": 0.96,
+    "resolution_type": "AUTONOMOUS",
+    "execution_result": {
+      "success": true,
+      "steps_executed": [
+        "Identify and terminate zombie test transactions: `SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE state = 'idle in transaction' AND state_change < now() - INTERVAL '5 minutes';`",
+        "Configure PgBouncer transaction-mode pooling with `max_client_conn = 500`",
+        "Enforce `idle_in_transaction_session_timeout = '60000'` in postgresql.conf",
+        "Database active connections dropped to 14; staging tests resumed."
+      ],
+      "simulated_output": [
+        "[INIT] Autofix-AI Autonomous Execution Engine v2.4",
+        "[TARGET] Ticket: TICK-110 | Execution Mode: Containerized Sandbox",
+        "[TIMESTAMP] 2026-11-07 09:56:24 UTC",
+        "---",
+        "[STEP 1/4] Identify and terminate zombie test transactions: `SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE state = 'idle in transaction' AND state_change < now() - INTERVAL '5 minutes';`",
+        "  [EXEC] Applying automated patch: 'Identify and terminate zombie test transactions: `' -> Completed with code 0 (Success).",
+        "[STEP 2/4] Configure PgBouncer transaction-mode pooling with `max_client_conn = 500`",
+        "  [EXEC] Verifying endpoint state: 'Configure PgBouncer transaction-mode pooling with' -> Completed with code 0 (Success).",
+        "[STEP 3/4] Enforce `idle_in_transaction_session_timeout = '60000'` in postgresql.conf",
+        "  [EXEC] db-pool-check -> Connection pool verified. Active: 12, Idle: 8, Max: 50. Handshake ping: 1.4ms.",
+        "[STEP 4/4] Database active connections dropped to 14; staging tests resumed.",
+        "  [EXEC] db-pool-check -> Connection pool verified. Active: 12, Idle: 8, Max: 50. Handshake ping: 1.4ms.",
+        "---",
+        "[VERIFY] Remediation pipeline executed successfully. All health probes: PASS (200 OK)."
+      ],
+      "execution_time_ms": 172,
+      "notes": "Remediation verified for ticket TICK-110 across 4 automated phases."
+    },
+    "diagnostic_insights": {
+      "matched_pattern_title": "Database Connection Pool Exhaustion / TNS Identifier Failure",
+      "matched_ticket_id": "TICK-110",
+      "confidence_percent": 96,
+      "detected_signature": "POSTGRES_CONNECTION_POOL_EXHAUSTION_IDLE_IN_TRANSACTION",
+      "root_cause_analysis": "Stale transactions left idle in transaction state or missing TNS descriptor in database config map.",
+      "recommended_solution": "1. Identify and terminate zombie test transactions: `SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE state = 'idle in transaction' AND state_change < now() - INTERVAL '5 minutes';`\n2. Configure PgBouncer transaction-mode pooling with `max_client_conn = 500`\n3. Enforce `idle_in_transaction_session_timeout = '60000'` in postgresql.conf\n4. Database active connections dropped to 14; staging tests resumed.",
+      "prevention_tip": "Enforce `idle_in_transaction_session_timeout` of 60 seconds on all staging and production databases."
+    },
+    "messages": [
+      {
+        "id": "MSG-999d76",
+        "sender": "Alex Chen",
+        "role": "user",
+        "content": "Integration test runner fails with 'FATAL: remaining connection slots are reserved for non-replication superuser connections'.",
+        "timestamp": "2026-11-07T15:26:24.734198"
+      },
+      {
+        "id": "MSG-2c441f",
+        "sender": "Hindsight Agent",
+        "role": "agent",
+        "content": "\ud83e\udd16 Diagnostic Intelligence:\n\u2022 Matched Pattern: Database Connection Pool Exhaustion / TNS Identifier Failure (96% confidence)\n\u2022 Root Cause: Stale transactions left idle in transaction state or missing TNS descriptor in database config map.\n\nActionable Remediation Protocol:\n1. Identify and terminate zombie test transactions: `SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE state = 'idle in transaction' AND state_change < now() - INTERVAL '5 minutes';`\n2. Configure PgBouncer transaction-mode pooling with `max_client_conn = 500`\n3. Enforce `idle_in_transaction_session_timeout = '60000'` in postgresql.conf\n4. Database active connections dropped to 14; staging tests resumed.",
+        "timestamp": "2026-11-07T15:26:24.734198"
+      }
+    ],
+    "screenshot_preview": null,
+    "company_id": "acme-corp",
+    "created_at": "2026-11-07T14:56:24.734198",
+    "resolved_at": "2026-11-07T15:26:24.734198",
+    "tags": [
+      "postgres",
+      "database",
+      "connection-pool",
+      "l2"
+    ]
+  },
+  "TICK-111": {
+    "id": "TICK-111",
+    "title": "Kubernetes Pod CrashLoopBackOff via Memory OOMKilled (Exit Code 137)",
+    "description": "Recommendation engine pod crashes every 4 minutes. `kubectl describe pod` shows Last State: Terminated with Reason: OOMKilled.",
+    "client_name": "DevOps OnCall",
+    "priority": "Critical",
+    "category": "L2",
+    "status": "RESOLVED_AUTONOMOUSLY",
+    "error_signature": "K8S_POD_OOMKILLED_EXIT_137_MEMORY_LIMIT_EXCEEDED",
+    "resolution_steps": "1. Analyze heap dump indicating memory leak in cache serialization layer\n2. Patch deployment resource limits: `kubectl set resources deployment/recommender -c app --limits=memory=2Gi --requests=memory=1Gi -n prod`\n3. Enable JVM container options `-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0`\n4. Pod status stabilized at Running with 0 restarts.",
+    "confidence_score": 0.96,
+    "resolution_type": "AUTONOMOUS",
+    "execution_result": {
+      "success": true,
+      "steps_executed": [
+        "Analyze heap dump indicating memory leak in cache serialization layer",
+        "Patch deployment resource limits: `kubectl set resources deployment/recommender -c app --limits=memory=2Gi --requests=memory=1Gi -n prod`",
+        "Enable JVM container options `-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0`",
+        "Pod status stabilized at Running with 0 restarts."
+      ],
+      "simulated_output": [
+        "[INIT] Autofix-AI Autonomous Execution Engine v2.4",
+        "[TARGET] Ticket: TICK-111 | Execution Mode: Containerized Sandbox",
+        "[TIMESTAMP] 2026-11-07 09:56:24 UTC",
+        "---",
+        "[STEP 1/4] Analyze heap dump indicating memory leak in cache serialization layer",
+        "  [EXEC] Applying automated patch: 'Analyze heap dump indicating memory leak in cache' -> Completed with code 0 (Success).",
+        "[STEP 2/4] Patch deployment resource limits: `kubectl set resources deployment/recommender -c app --limits=memory=2Gi --requests=memory=1Gi -n prod`",
+        "  [EXEC] kubectl rollout restart deployment -> deployment.apps/core-service restarted. 3/3 pods ready (24s).",
+        "[STEP 3/4] Enable JVM container options `-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0`",
+        "  [EXEC] Synchronizing identity state: 'Enable JVM container options `-XX:+UseContainerSup' -> Completed with code 0 (Success).",
+        "[STEP 4/4] Pod status stabilized at Running with 0 restarts.",
+        "  [EXEC] kubectl rollout restart deployment -> deployment.apps/core-service restarted. 3/3 pods ready (24s).",
+        "---",
+        "[VERIFY] Remediation pipeline executed successfully. All health probes: PASS (200 OK)."
+      ],
+      "execution_time_ms": 284,
+      "notes": "Remediation verified for ticket TICK-111 across 4 automated phases."
+    },
+    "diagnostic_insights": {
+      "matched_pattern_title": "Kubernetes Pod CrashLoopBackOff via Memory OOMKilled (Exit 137)",
+      "matched_ticket_id": "TICK-111",
+      "confidence_percent": 96,
+      "detected_signature": "K8S_POD_OOMKILLED_EXIT_137_MEMORY_LIMIT_EXCEEDED",
+      "root_cause_analysis": "Containerized JVM or worker process exceeded hard cgroup memory limits, triggering Linux kernel Out-Of-Memory killer.",
+      "recommended_solution": "1. Analyze heap dump indicating memory leak in cache serialization layer\n2. Patch deployment resource limits: `kubectl set resources deployment/recommender -c app --limits=memory=2Gi --requests=memory=1Gi -n prod`\n3. Enable JVM container options `-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0`\n4. Pod status stabilized at Running with 0 restarts.",
+      "prevention_tip": "Set up Prometheus memory alerts at 85% consumption threshold to avoid unexpected OOM termination."
+    },
+    "messages": [
+      {
+        "id": "MSG-2f200a",
+        "sender": "DevOps OnCall",
+        "role": "user",
+        "content": "Recommendation engine pod crashes every 4 minutes. `kubectl describe pod` shows Last State: Terminated with Reason: OOMKilled.",
+        "timestamp": "2026-11-07T15:26:24.734198"
+      },
+      {
+        "id": "MSG-e87c3c",
+        "sender": "Hindsight Agent",
+        "role": "agent",
+        "content": "\ud83e\udd16 Diagnostic Intelligence:\n\u2022 Matched Pattern: Kubernetes Pod CrashLoopBackOff via Memory OOMKilled (Exit 137) (96% confidence)\n\u2022 Root Cause: Containerized JVM or worker process exceeded hard cgroup memory limits, triggering Linux kernel Out-Of-Memory killer.\n\nActionable Remediation Protocol:\n1. Analyze heap dump indicating memory leak in cache serialization layer\n2. Patch deployment resource limits: `kubectl set resources deployment/recommender -c app --limits=memory=2Gi --requests=memory=1Gi -n prod`\n3. Enable JVM container options `-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0`\n4. Pod status stabilized at Running with 0 restarts.",
+        "timestamp": "2026-11-07T15:26:24.735196"
+      }
+    ],
+    "screenshot_preview": null,
+    "company_id": "acme-corp",
+    "created_at": "2026-11-07T14:56:24.734198",
+    "resolved_at": "2026-11-07T15:26:24.734198",
+    "tags": [
+      "kubernetes",
+      "oomkilled",
+      "docker",
+      "memory",
+      "l2",
+      "critical"
+    ]
+  },
+  "TICK-112": {
+    "id": "TICK-112",
+    "title": "Docker Private Registry ImagePullBackOff (x509 Certificate Unknown Authority)",
+    "description": "Worker nodes failing to pull images from internal harbor registry: `harbor.corp.internal/apps/frontend:v2.4`.",
+    "client_name": "Liam Murphy",
+    "priority": "Medium",
+    "category": "L2",
+    "status": "RESOLVED_HUMAN_VERIFIED",
+    "error_signature": "DOCKER_REGISTRY_X509_CERT_UNKNOWN_AUTHORITY_IMAGEPULLBACKOFF",
+    "resolution_steps": "1. Distribute corporate internal root CA certificate to all Kubernetes nodes at `/etc/docker/certs.d/harbor.corp.internal/ca.crt`\n2. Run `update-ca-certificates` on host nodes and restart containerd daemon (`systemctl restart containerd`)\n3. Re-trigger image pull test: `crictl pull harbor.corp.internal/apps/frontend:v2.4`\n4. Image pulled successfully, all pods transition to Running.",
+    "confidence_score": 0.82,
+    "resolution_type": "HUMAN_IN_THE_LOOP",
+    "execution_result": {
+      "success": true,
+      "steps_executed": [
+        "Distribute corporate internal root CA certificate to all Kubernetes nodes at `/etc/docker/certs.d/harbor.corp.internal/ca.crt`",
+        "Run `update-ca-certificates` on host nodes and restart containerd daemon (`systemctl restart containerd`)",
+        "Re-trigger image pull test: `crictl pull harbor.corp.internal/apps/frontend:v2.4`",
+        "Image pulled successfully, all pods transition to Running."
+      ],
+      "simulated_output": [
+        "[INIT] Autofix-AI Autonomous Execution Engine v2.4",
+        "[TARGET] Ticket: TICK-112 | Execution Mode: Containerized Sandbox",
+        "[TIMESTAMP] 2026-11-07 09:56:24 UTC",
+        "---",
+        "[STEP 1/4] Distribute corporate internal root CA certificate to all Kubernetes nodes at `/etc/docker/certs.d/harbor.corp.internal/ca.crt`",
+        "  [EXEC] cert-manager renew -> Certificate x509 validated. TLS 1.3 secret provisioned. Validity: +365 days.",
+        "[STEP 2/4] Run `update-ca-certificates` on host nodes and restart containerd daemon (`systemctl restart containerd`)",
+        "  [EXEC] cert-manager renew -> Certificate x509 validated. TLS 1.3 secret provisioned. Validity: +365 days.",
+        "[STEP 3/4] Re-trigger image pull test: `crictl pull harbor.corp.internal/apps/frontend:v2.4`",
+        "  [EXEC] Synchronizing identity state: 'Re-trigger image pull test: `crictl pull harbor.co' -> Completed with code 0 (Success).",
+        "[STEP 4/4] Image pulled successfully, all pods transition to Running.",
+        "  [EXEC] kubectl rollout restart deployment -> deployment.apps/core-service restarted. 3/3 pods ready (24s).",
+        "---",
+        "[VERIFY] Remediation pipeline executed successfully. All health probes: PASS (200 OK)."
+      ],
+      "execution_time_ms": 320,
+      "notes": "Remediation verified for ticket TICK-112 across 4 automated phases."
+    },
+    "diagnostic_insights": {
+      "matched_pattern_title": "Internal TLS/SSL Certificate Expiration (ERR_SSL_PROTOCOL_ERROR)",
+      "matched_ticket_id": "TICK-112",
+      "confidence_percent": 82,
+      "detected_signature": "DOCKER_REGISTRY_X509_CERT_UNKNOWN_AUTHORITY_IMAGEPULLBACKOFF",
+      "root_cause_analysis": "Ingress wildcard TLS certificate passed its 365-day validity date without automated ACME renewal.",
+      "recommended_solution": "1. Distribute corporate internal root CA certificate to all Kubernetes nodes at `/etc/docker/certs.d/harbor.corp.internal/ca.crt`\n2. Run `update-ca-certificates` on host nodes and restart containerd daemon (`systemctl restart containerd`)\n3. Re-trigger image pull test: `crictl pull harbor.corp.internal/apps/frontend:v2.4`\n4. Image pulled successfully, all pods transition to Running.",
+      "prevention_tip": "Set Cert-Manager renewal offset to 30 days prior to certificate expiration."
+    },
+    "messages": [
+      {
+        "id": "MSG-991865",
+        "sender": "Liam Murphy",
+        "role": "user",
+        "content": "Worker nodes failing to pull images from internal harbor registry: `harbor.corp.internal/apps/frontend:v2.4`.",
+        "timestamp": "2026-11-07T15:26:24.735196"
+      },
+      {
+        "id": "MSG-ebe218",
+        "sender": "Hindsight Agent",
+        "role": "agent",
+        "content": "\ud83e\udd16 Diagnostic Intelligence:\n\u2022 Matched Pattern: Internal TLS/SSL Certificate Expiration (ERR_SSL_PROTOCOL_ERROR) (82% confidence)\n\u2022 Root Cause: Ingress wildcard TLS certificate passed its 365-day validity date without automated ACME renewal.\n\nActionable Remediation Protocol:\n1. Distribute corporate internal root CA certificate to all Kubernetes nodes at `/etc/docker/certs.d/harbor.corp.internal/ca.crt`\n2. Run `update-ca-certificates` on host nodes and restart containerd daemon (`systemctl restart containerd`)\n3. Re-trigger image pull test: `crictl pull harbor.corp.internal/apps/frontend:v2.4`\n4. Image pulled successfully, all pods transition to Running.",
+        "timestamp": "2026-11-07T15:26:24.735196"
+      }
+    ],
+    "screenshot_preview": null,
+    "company_id": "acme-corp",
+    "created_at": "2026-11-07T14:56:24.735196",
+    "resolved_at": "2026-11-07T15:26:24.735196",
+    "tags": [
+      "docker",
+      "registry",
+      "x509",
+      "ssl",
+      "kubernetes",
+      "l2"
+    ]
+  },
+  "TICK-113": {
+    "id": "TICK-113",
+    "title": "OAuth 2.0 API Gateway Token Verification Clock Skew Mismatch",
+    "description": "Downstream partner API calls returning HTTP 401: 'The token is not valid yet (nbf claim in future)'.",
+    "client_name": "Tariq Mansoor",
+    "priority": "High",
+    "category": "L2",
+    "status": "RESOLVED_AUTONOMOUSLY",
+    "error_signature": "OAUTH2_JWT_NBF_CLOCK_SKEW_GATEWAY_401",
+    "resolution_steps": "1. Configure JWT validation library clock skew tolerance to 60 seconds (`jwtOptions.ClockSkew = TimeSpan.FromMinutes(1)`)\n2. Resynchronize chrony NTP daemon across API gateway cluster (`chronyc -a makestep`)\n3. Verify token validation against partner public JWKS keyset\n4. Subsequent API calls returned HTTP 200 with valid claims payload.",
+    "confidence_score": 0.96,
+    "resolution_type": "AUTONOMOUS",
+    "execution_result": {
+      "success": true,
+      "steps_executed": [
+        "Configure JWT validation library clock skew tolerance to 60 seconds (`jwtOptions.ClockSkew = TimeSpan.FromMinutes(1)`)",
+        "Resynchronize chrony NTP daemon across API gateway cluster (`chronyc -a makestep`)",
+        "Verify token validation against partner public JWKS keyset",
+        "Subsequent API calls returned HTTP 200 with valid claims payload."
+      ],
+      "simulated_output": [
+        "[INIT] Autofix-AI Autonomous Execution Engine v2.4",
+        "[TARGET] Ticket: TICK-113 | Execution Mode: Containerized Sandbox",
+        "[TIMESTAMP] 2026-11-07 09:56:24 UTC",
+        "---",
+        "[STEP 1/4] Configure JWT validation library clock skew tolerance to 60 seconds (`jwtOptions.ClockSkew = TimeSpan.FromMinutes(1)`)",
+        "  [EXEC] Verifying endpoint state: 'Configure JWT validation library clock skew tolera' -> Completed with code 0 (Success).",
+        "[STEP 2/4] Resynchronize chrony NTP daemon across API gateway cluster (`chronyc -a makestep`)",
+        "  [EXEC] w32tm /resync /force -> Sending resync command to local computer... The command completed successfully (Offset: 0.0012s).",
+        "[STEP 3/4] Verify token validation against partner public JWKS keyset",
+        "  [EXEC] Running diagnostics: 'Verify token validation against partner public JWK' -> Completed with code 0 (Success).",
+        "[STEP 4/4] Subsequent API calls returned HTTP 200 with valid claims payload.",
+        "  [EXEC] Applying automated patch: 'Subsequent API calls returned HTTP 200 with valid' -> Completed with code 0 (Success).",
+        "---",
+        "[VERIFY] Remediation pipeline executed successfully. All health probes: PASS (200 OK)."
+      ],
+      "execution_time_ms": 249,
+      "notes": "Remediation verified for ticket TICK-113 across 4 automated phases."
+    },
+    "diagnostic_insights": {
+      "matched_pattern_title": "Salesforce & Okta SAML 401 Clock Skew / Stale Assertion",
+      "matched_ticket_id": "TICK-113",
+      "confidence_percent": 96,
+      "detected_signature": "OAUTH2_JWT_NBF_CLOCK_SKEW_GATEWAY_401",
+      "root_cause_analysis": "SAML response validation failed due to client-server NTP time drift or stale multi-factor authentication tokens in the identity provider cache.",
+      "recommended_solution": "1. Configure JWT validation library clock skew tolerance to 60 seconds (`jwtOptions.ClockSkew = TimeSpan.FromMinutes(1)`)\n2. Resynchronize chrony NTP daemon across API gateway cluster (`chronyc -a makestep`)\n3. Verify token validation against partner public JWKS keyset\n4. Subsequent API calls returned HTTP 200 with valid claims payload.",
+      "prevention_tip": "Ensure domain controller NTP synchronization policy is enforced across all client endpoints."
+    },
+    "messages": [
+      {
+        "id": "MSG-db869c",
+        "sender": "Tariq Mansoor",
+        "role": "user",
+        "content": "Downstream partner API calls returning HTTP 401: 'The token is not valid yet (nbf claim in future)'.",
+        "timestamp": "2026-11-07T15:26:24.735196"
+      },
+      {
+        "id": "MSG-6a7ef7",
+        "sender": "Hindsight Agent",
+        "role": "agent",
+        "content": "\ud83e\udd16 Diagnostic Intelligence:\n\u2022 Matched Pattern: Salesforce & Okta SAML 401 Clock Skew / Stale Assertion (96% confidence)\n\u2022 Root Cause: SAML response validation failed due to client-server NTP time drift or stale multi-factor authentication tokens in the identity provider cache.\n\nActionable Remediation Protocol:\n1. Configure JWT validation library clock skew tolerance to 60 seconds (`jwtOptions.ClockSkew = TimeSpan.FromMinutes(1)`)\n2. Resynchronize chrony NTP daemon across API gateway cluster (`chronyc -a makestep`)\n3. Verify token validation against partner public JWKS keyset\n4. Subsequent API calls returned HTTP 200 with valid claims payload.",
+        "timestamp": "2026-11-07T15:26:24.735196"
+      }
+    ],
+    "screenshot_preview": null,
+    "company_id": "acme-corp",
+    "created_at": "2026-11-07T14:56:24.735196",
+    "resolved_at": "2026-11-07T15:26:24.735196",
+    "tags": [
+      "oauth2",
+      "jwt",
+      "api-gateway",
+      "security",
+      "l2"
+    ]
+  },
+  "TICK-114": {
+    "id": "TICK-114",
+    "title": "Redis Cluster Split-Brain & Authentication NOAUTH Failure",
+    "description": "Session store microservice threw NOAUTH errors following failover of master redis node to sentinel replica.",
+    "client_name": "Nathan Drake",
+    "priority": "High",
+    "category": "L2",
+    "status": "RESOLVED_HUMAN_VERIFIED",
+    "error_signature": "REDIS_CLUSTER_NOAUTH_MASTERAUTH_FAILOVER_MISMATCH",
+    "resolution_steps": "1. Inspect `redis.conf` across sentinel nodes; discovered `masterauth` password missing on replica node 3\n2. Restore the credential from the approved secret manager using secure handling, then persist the configuration without printing the secret\n3. Execute `SENTINEL failover mymaster` to verify seamless quorum handover\n4. All session read/write commands verified healthy across cluster topology.",
+    "confidence_score": 0.82,
+    "resolution_type": "HUMAN_IN_THE_LOOP",
+    "execution_result": {
+      "success": true,
+      "steps_executed": [
+        "Inspect `redis.conf` across sentinel nodes; discovered `masterauth` password missing on replica node 3",
+        "Restore the credential from the approved secret manager using secure handling, then persist the configuration without printing the secret",
+        "Execute `SENTINEL failover mymaster` to verify seamless quorum handover",
+        "All session read/write commands verified healthy across cluster topology."
+      ],
+      "simulated_output": [
+        "[INIT] Autofix-AI Autonomous Execution Engine v2.4",
+        "[TARGET] Ticket: TICK-114 | Execution Mode: Containerized Sandbox",
+        "[TIMESTAMP] 2026-11-07 09:56:24 UTC",
+        "---",
+        "[STEP 1/4] Inspect `redis.conf` across sentinel nodes; discovered `masterauth` password missing on replica node 3",
+        "  [EXEC] redis-cli CONFIG REWRITE -> OK. Master-auth configuration propagated across sentinel quorum.",
+        "[STEP 2/4] Restore the credential from the approved secret manager using secure handling, then persist the configuration without printing the secret",
+        "  [EXEC] Synchronizing identity state: 'Restore the credential from the approved secret ma' -> Completed with code 0 (Success).",
+        "[STEP 3/4] Execute `SENTINEL failover mymaster` to verify seamless quorum handover",
+        "  [EXEC] Running diagnostics: 'Execute `SENTINEL failover mymaster` to verify sea' -> Completed with code 0 (Success).",
+        "[STEP 4/4] All session read/write commands verified healthy across cluster topology.",
+        "  [EXEC] Applying automated patch: 'All session read/write commands verified healthy a' -> Completed with code 0 (Success).",
+        "---",
+        "[VERIFY] Remediation pipeline executed successfully. All health probes: PASS (200 OK)."
+      ],
+      "execution_time_ms": 185,
+      "notes": "Remediation verified for ticket TICK-114 across 4 automated phases."
+    },
+    "diagnostic_insights": {
+      "matched_pattern_title": "Redis Distributed Cache Authentication Failure & Key Lockout",
+      "matched_ticket_id": "TICK-114",
+      "confidence_percent": 82,
+      "detected_signature": "REDIS_CLUSTER_NOAUTH_MASTERAUTH_FAILOVER_MISMATCH",
+      "root_cause_analysis": "Secret rotation updated the Redis cluster password without updating downstream microservice configuration maps.",
+      "recommended_solution": "1. Inspect `redis.conf` across sentinel nodes; discovered `masterauth` password missing on replica node 3\n2. Restore the credential from the approved secret manager using secure handling, then persist the configuration without printing the secret\n3. Execute `SENTINEL failover mymaster` to verify seamless quorum handover\n4. All session read/write commands verified healthy across cluster topology.",
+      "prevention_tip": "Configure automated Vault agent sidecars to dynamically reload credentials."
+    },
+    "messages": [
+      {
+        "id": "MSG-073673",
+        "sender": "Nathan Drake",
+        "role": "user",
+        "content": "Session store microservice threw NOAUTH errors following failover of master redis node to sentinel replica.",
+        "timestamp": "2026-11-07T15:26:24.735196"
+      },
+      {
+        "id": "MSG-96c977",
+        "sender": "Hindsight Agent",
+        "role": "agent",
+        "content": "\ud83e\udd16 Diagnostic Intelligence:\n\u2022 Matched Pattern: Redis Distributed Cache Authentication Failure & Key Lockout (82% confidence)\n\u2022 Root Cause: Secret rotation updated the Redis cluster password without updating downstream microservice configuration maps.\n\nActionable Remediation Protocol:\n1. Inspect `redis.conf` across sentinel nodes; discovered `masterauth` password missing on replica node 3\n2. Restore the credential from the approved secret manager using secure handling, then persist the configuration without printing the secret\n3. Execute `SENTINEL failover mymaster` to verify seamless quorum handover\n4. All session read/write commands verified healthy across cluster topology.",
+        "timestamp": "2026-11-07T15:26:24.735196"
+      }
+    ],
+    "screenshot_preview": null,
+    "company_id": "acme-corp",
+    "created_at": "2026-11-07T14:56:24.735196",
+    "resolved_at": "2026-11-07T15:26:24.735196",
+    "tags": [
+      "redis",
+      "cluster",
+      "cache",
+      "noauth",
+      "l2"
+    ]
+  },
+  "TICK-115": {
+    "id": "TICK-115",
+    "title": "Internal Gateway SSL Cert Expiry (ERR_SSL_PROTOCOL_ERROR)",
+    "description": "All employees receiving browser security alerts 'Your connection is not private' when accessing internal customer portal.",
+    "client_name": "Emily Watson",
+    "priority": "Critical",
+    "category": "L2",
+    "status": "RESOLVED_AUTONOMOUSLY",
+    "error_signature": "INTERNAL_GATEWAY_NET_ERR_CERT_DATE_INVALID_EXPIRED",
+    "resolution_steps": "1. Trigger automated Let's Encrypt / DigiCert renewal workflow via Cert-Manager: `kubectl renew certificate internal-corp-wildcard -n ingress`\n2. Verify renewed certificate validity window extended for 365 days\n3. Reload NGINX Ingress controller pods to mount updated TLS secret\n4. Verified HTTPS handshake with TLS 1.3 across desktop and mobile clients.",
+    "confidence_score": 0.96,
+    "resolution_type": "AUTONOMOUS",
+    "execution_result": {
+      "success": true,
+      "steps_executed": [
+        "Trigger automated Let's Encrypt / DigiCert renewal workflow via Cert-Manager: `kubectl renew certificate internal-corp-wildcard -n ingress`",
+        "Verify renewed certificate validity window extended for 365 days",
+        "Reload NGINX Ingress controller pods to mount updated TLS secret",
+        "Verified HTTPS handshake with TLS 1.3 across desktop and mobile clients."
+      ],
+      "simulated_output": [
+        "[INIT] Autofix-AI Autonomous Execution Engine v2.4",
+        "[TARGET] Ticket: TICK-115 | Execution Mode: Containerized Sandbox",
+        "[TIMESTAMP] 2026-11-07 09:56:24 UTC",
+        "---",
+        "[STEP 1/4] Trigger automated Let's Encrypt / DigiCert renewal workflow via Cert-Manager: `kubectl renew certificate internal-corp-wildcard -n ingress`",
+        "  [EXEC] kubectl rollout restart deployment -> deployment.apps/core-service restarted. 3/3 pods ready (24s).",
+        "[STEP 2/4] Verify renewed certificate validity window extended for 365 days",
+        "  [EXEC] cert-manager renew -> Certificate x509 validated. TLS 1.3 secret provisioned. Validity: +365 days.",
+        "[STEP 3/4] Reload NGINX Ingress controller pods to mount updated TLS secret",
+        "  [EXEC] kubectl rollout restart deployment -> deployment.apps/core-service restarted. 3/3 pods ready (24s).",
+        "[STEP 4/4] Verified HTTPS handshake with TLS 1.3 across desktop and mobile clients.",
+        "  [EXEC] Applying automated patch: 'Verified HTTPS handshake with TLS 1.3 across deskt' -> Completed with code 0 (Success).",
+        "---",
+        "[VERIFY] Remediation pipeline executed successfully. All health probes: PASS (200 OK)."
+      ],
+      "execution_time_ms": 145,
+      "notes": "Remediation verified for ticket TICK-115 across 4 automated phases."
+    },
+    "diagnostic_insights": {
+      "matched_pattern_title": "Internal TLS/SSL Certificate Expiration (ERR_SSL_PROTOCOL_ERROR)",
+      "matched_ticket_id": "TICK-115",
+      "confidence_percent": 96,
+      "detected_signature": "INTERNAL_GATEWAY_NET_ERR_CERT_DATE_INVALID_EXPIRED",
+      "root_cause_analysis": "Ingress wildcard TLS certificate passed its 365-day validity date without automated ACME renewal.",
+      "recommended_solution": "1. Trigger automated Let's Encrypt / DigiCert renewal workflow via Cert-Manager: `kubectl renew certificate internal-corp-wildcard -n ingress`\n2. Verify renewed certificate validity window extended for 365 days\n3. Reload NGINX Ingress controller pods to mount updated TLS secret\n4. Verified HTTPS handshake with TLS 1.3 across desktop and mobile clients.",
+      "prevention_tip": "Set Cert-Manager renewal offset to 30 days prior to certificate expiration."
+    },
+    "messages": [
+      {
+        "id": "MSG-3acd53",
+        "sender": "Emily Watson",
+        "role": "user",
+        "content": "All employees receiving browser security alerts 'Your connection is not private' when accessing internal customer portal.",
+        "timestamp": "2026-11-07T15:26:24.735196"
+      },
+      {
+        "id": "MSG-dc1cc7",
+        "sender": "Hindsight Agent",
+        "role": "agent",
+        "content": "\ud83e\udd16 Diagnostic Intelligence:\n\u2022 Matched Pattern: Internal TLS/SSL Certificate Expiration (ERR_SSL_PROTOCOL_ERROR) (96% confidence)\n\u2022 Root Cause: Ingress wildcard TLS certificate passed its 365-day validity date without automated ACME renewal.\n\nActionable Remediation Protocol:\n1. Trigger automated Let's Encrypt / DigiCert renewal workflow via Cert-Manager: `kubectl renew certificate internal-corp-wildcard -n ingress`\n2. Verify renewed certificate validity window extended for 365 days\n3. Reload NGINX Ingress controller pods to mount updated TLS secret\n4. Verified HTTPS handshake with TLS 1.3 across desktop and mobile clients.",
+        "timestamp": "2026-11-07T15:26:24.735196"
+      }
+    ],
+    "screenshot_preview": null,
+    "company_id": "acme-corp",
+    "created_at": "2026-11-07T14:56:24.735196",
+    "resolved_at": "2026-11-07T15:26:24.735196",
+    "tags": [
+      "ssl",
+      "tls",
+      "certificates",
+      "ingress",
+      "security",
+      "l2",
+      "critical"
+    ]
+  },
+  "TICKET-135": {
+    "id": "TICKET-135",
+    "title": "Cisco AnyConnect VPN Gateway Unreachable again",
+    "description": "IP forwarding table error when connecting to AnyConnect gateway pool",
+    "client_name": "Sarah Connor",
+    "priority": "High",
+    "category": "L1",
+    "status": "PENDING_HUMAN_REVIEW",
+    "error_signature": "CISCO_ANYCONNECT_GATEWAY_UNREACHABLE_AGAIN",
+    "resolution_steps": "1. Restart Cisco AnyConnect Secure Mobility Agent service (`net stop csc_vpnagent && net start csc_vpnagent`)\n2. Reset Windows Socket stack and flush DNS cache (`netsh winsock reset && ipconfig /flushdns`)\n3. Verify split tunneling routing table metric for interface 0.0.0.0/0\n4. Connection established successfully with assigned corporate IP 10.45.12.88.",
+    "confidence_score": 0.501,
+    "resolution_type": null,
+    "execution_result": null,
+    "diagnostic_insights": {
+      "matched_pattern_title": "Cisco AnyConnect Tunnel Gateway Timeout & Routing Drop",
+      "matched_ticket_id": "TICK-102",
+      "confidence_percent": 50,
+      "detected_signature": "CISCO_ANYCONNECT_GATEWAY_UNREACHABLE_AGAIN",
+      "root_cause_analysis": "Local Windows Socket stack corruption or TAP-Windows network adapter binding priority drop preventing DHCP pool gateway address assignment.",
+      "recommended_solution": "1. Restart Cisco AnyConnect Secure Mobility Agent service (`net stop csc_vpnagent && net start csc_vpnagent`)\n2. Reset Windows Socket stack and flush DNS cache (`netsh winsock reset && ipconfig /flushdns`)\n3. Verify split tunneling routing table metric for interface 0.0.0.0/0\n4. Connection established successfully with assigned corporate IP 10.45.12.88.",
+      "prevention_tip": "Update Cisco AnyConnect client to v4.10+ to prevent split-tunnel routing conflicts."
+    },
+    "messages": [
+      {
+        "id": "MSG-bc3755",
+        "sender": "Sarah Connor",
+        "role": "user",
+        "content": "IP forwarding table error when connecting to AnyConnect gateway pool",
+        "timestamp": "2026-11-07T15:26:29.767869"
+      },
+      {
+        "id": "MSG-facabc",
+        "sender": "Hindsight Agent",
+        "role": "agent",
+        "content": "\ud83d\udd0d Hindsight Pattern Match (50% Match):\n\u2022 Correlated Pattern: Cisco AnyConnect Tunnel Gateway Timeout & Routing Drop\n\u2022 Diagnostic Root Cause: Local Windows Socket stack corruption or TAP-Windows network adapter binding priority drop preventing DHCP pool gateway address assignment.\n\nRecommended Remediation Protocol:\n1. Restart Cisco AnyConnect Secure Mobility Agent service (`net stop csc_vpnagent && net start csc_vpnagent`)\n2. Reset Windows Socket stack and flush DNS cache (`netsh winsock reset && ipconfig /flushdns`)\n3. Verify split tunneling routing table metric for interface 0.0.0.0/0\n4. Connection established successfully with assigned corporate IP 10.45.12.88.\n\n\u26a0\ufe0f Confidence (50%) requires human approval. Review or adjust the steps and click 'Approve & Solve'.",
+        "timestamp": "2026-11-07T15:26:29.767869"
+      }
+    ],
+    "screenshot_preview": null,
+    "company_id": "acme-corp",
+    "created_at": "2026-11-07T15:26:29.767869",
+    "resolved_at": null,
+    "tags": [
+      "l1",
+      "high"
+    ]
+  },
+  "TICKET-136": {
+    "id": "TICKET-136",
+    "title": "Completely unknown quantum laser printer optical glitch",
+    "description": "Strange holographic refraction occurring on the print head beam",
+    "client_name": "Doc Brown",
+    "priority": "Medium",
+    "category": "L2",
+    "status": "RESOLVED_HUMAN_VERIFIED",
+    "error_signature": "PRINTER_COMPLETELY_UNKNOWN_QUANTUM_LASER",
+    "resolution_steps": "1. Recalibrate diode crystal.\n2. Power cycle printer module.\n3. Verified beam alignment 200 OK.",
+    "confidence_score": 1.0,
+    "resolution_type": "HUMAN_IN_THE_LOOP",
+    "execution_result": {
+      "success": true,
+      "steps_executed": [
+        "Recalibrate diode crystal.",
+        "Power cycle printer module.",
+        "Verified beam alignment 200 OK."
+      ],
+      "simulated_output": [
+        "[INIT] Autofix-AI Autonomous Execution Engine v2.4",
+        "[TARGET] Ticket: TICKET-136 | Execution Mode: Containerized Sandbox",
+        "[TIMESTAMP] 2026-11-07 09:56:29 UTC",
+        "---",
+        "[STEP 1/3] Recalibrate diode crystal.",
+        "  [EXEC] Synchronizing identity state: 'Recalibrate diode crystal.' -> Completed with code 0 (Success).",
+        "[STEP 2/3] Power cycle printer module.",
+        "  [EXEC] net stop spooler && net start spooler -> Print Spooler service stopped and restarted successfully.",
+        "[STEP 3/3] Verified beam alignment 200 OK.",
+        "  [EXEC] Applying automated patch: 'Verified beam alignment 200 OK.' -> Completed with code 0 (Success).",
+        "---",
+        "[VERIFY] Remediation pipeline executed successfully. All health probes: PASS (200 OK)."
+      ],
+      "execution_time_ms": 306,
+      "notes": "Remediation verified for ticket TICKET-136 across 3 automated phases."
+    },
+    "diagnostic_insights": {
+      "matched_pattern_title": "FollowMe Network Printer Dynamic WSD Port Disconnect",
+      "matched_ticket_id": "TICK-108",
+      "confidence_percent": 35,
+      "detected_signature": "PRINTER_COMPLETELY_UNKNOWN_QUANTUM_LASER",
+      "root_cause_analysis": "Network DHCP lease renewal reassigned the physical printer IP address while workstations were bound to dynamic WSD ports.",
+      "recommended_solution": "1. Change printer port from dynamic WSD to Standard TCP/IP Port bound to static DNS `xerox-fl3.printers.corp`\n2. Restart Print Spooler service on printserver: `Restart-Service Spooler -Force`\n3. Clear stuck documents in `C:\\Windows\\System32\\spool\\PRINTERS`\n4. Sent test page; print job finished successfully.",
+      "prevention_tip": "Reserve static DHCP bindings for all enterprise floor printers."
+    },
+    "messages": [
+      {
+        "id": "MSG-276491",
+        "sender": "Doc Brown",
+        "role": "user",
+        "content": "Strange holographic refraction occurring on the print head beam",
+        "timestamp": "2026-11-07T15:26:29.771516"
+      },
+      {
+        "id": "MSG-9a664f",
+        "sender": "Hindsight Agent",
+        "role": "agent",
+        "content": "\ud83d\udd0d Hindsight Pattern Match (35% Match):\n\u2022 Correlated Pattern: FollowMe Network Printer Dynamic WSD Port Disconnect\n\u2022 Diagnostic Root Cause: Network DHCP lease renewal reassigned the physical printer IP address while workstations were bound to dynamic WSD ports.\n\nRecommended Remediation Protocol:\n1. Change printer port from dynamic WSD to Standard TCP/IP Port bound to static DNS `xerox-fl3.printers.corp`\n2. Restart Print Spooler service on printserver: `Restart-Service Spooler -Force`\n3. Clear stuck documents in `C:\\Windows\\System32\\spool\\PRINTERS`\n4. Sent test page; print job finished successfully.\n\n\u26a0\ufe0f Confidence (35%) requires human approval. Review or adjust the steps and click 'Approve & Solve'.",
+        "timestamp": "2026-11-07T15:26:29.771516"
+      },
+      {
+        "id": "MSG-51a894",
+        "sender": "Chief Scientist",
+        "role": "engineer",
+        "content": "Verified Resolution Approved & Executed:\n1. Recalibrate diode crystal.\n2. Power cycle printer module.\n3. Verified beam alignment 200 OK.",
+        "timestamp": "2026-11-07T15:26:29.775380"
+      },
+      {
+        "id": "MSG-496b80",
+        "sender": "Hindsight Agent",
+        "role": "system",
+        "content": "\u2705 Learned and indexed solution into Hindsight Memory. Future identical incidents will now be resolved autonomously.",
+        "timestamp": "2026-11-07T15:26:29.775380"
+      }
+    ],
+    "screenshot_preview": null,
+    "company_id": "acme-corp",
+    "created_at": "2026-11-07T15:26:29.771516",
+    "resolved_at": "2026-11-07T15:26:29.775380",
+    "tags": [
+      "l2",
+      "medium"
+    ]
+  },
+  "TICKET-137": {
+    "id": "TICKET-137",
+    "title": "Quantum laser printer optical glitch recurring",
+    "description": "Recalibrate diode crystal needed for holographic refraction",
+    "client_name": "Marty McFly",
+    "priority": "Medium",
+    "category": "L2",
+    "status": "PENDING_HUMAN_REVIEW",
+    "error_signature": "PRINTER_QUANTUM_LASER_OPTICAL_GLITCH",
+    "resolution_steps": "1. Recalibrate diode crystal.\n2. Power cycle printer module.\n3. Verified beam alignment 200 OK.",
+    "confidence_score": 0.706,
+    "resolution_type": null,
+    "execution_result": null,
+    "diagnostic_insights": {
+      "matched_pattern_title": "FollowMe Network Printer Dynamic WSD Port Disconnect",
+      "matched_ticket_id": "TICKET-136",
+      "confidence_percent": 70,
+      "detected_signature": "PRINTER_QUANTUM_LASER_OPTICAL_GLITCH",
+      "root_cause_analysis": "Network DHCP lease renewal reassigned the physical printer IP address while workstations were bound to dynamic WSD ports.",
+      "recommended_solution": "1. Recalibrate diode crystal.\n2. Power cycle printer module.\n3. Verified beam alignment 200 OK.",
+      "prevention_tip": "Reserve static DHCP bindings for all enterprise floor printers."
+    },
+    "messages": [
+      {
+        "id": "MSG-2a1847",
+        "sender": "Marty McFly",
+        "role": "user",
+        "content": "Recalibrate diode crystal needed for holographic refraction",
+        "timestamp": "2026-11-07T15:26:29.778479"
+      },
+      {
+        "id": "MSG-9ffc4b",
+        "sender": "Hindsight Agent",
+        "role": "agent",
+        "content": "\ud83d\udd0d Hindsight Pattern Match (70% Match):\n\u2022 Correlated Pattern: FollowMe Network Printer Dynamic WSD Port Disconnect\n\u2022 Diagnostic Root Cause: Network DHCP lease renewal reassigned the physical printer IP address while workstations were bound to dynamic WSD ports.\n\nRecommended Remediation Protocol:\n1. Recalibrate diode crystal.\n2. Power cycle printer module.\n3. Verified beam alignment 200 OK.\n\n\u26a0\ufe0f Confidence (70%) requires human approval. Review or adjust the steps and click 'Approve & Solve'.",
+        "timestamp": "2026-11-07T15:26:29.778479"
+      }
+    ],
+    "screenshot_preview": null,
+    "company_id": "acme-corp",
+    "created_at": "2026-11-07T15:26:29.778479",
+    "resolved_at": null,
+    "tags": [
+      "l2",
+      "medium"
+    ]
+  }
+}

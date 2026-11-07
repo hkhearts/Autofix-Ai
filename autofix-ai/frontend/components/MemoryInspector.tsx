@@ -13,6 +13,7 @@ import {
   TrendingUp,
   Database,
   ExternalLink,
+  Cloud,
 } from "lucide-react";
 import axios from "axios";
 import { MemorySearchResult, MemoryStats, Ticket } from "../types/ticket";
@@ -36,28 +37,98 @@ export const MemoryInspector: React.FC<MemoryInspectorProps> = ({
   const [searchError, setSearchError] = useState("");
   const [searchResults, setSearchResults] = useState<MemorySearchResult[]>([]);
   const [selectedCaseModal, setSelectedCaseModal] = useState<any | null>(null);
+  const [isCloudMode, setIsCloudMode] = useState(true);
+  const [isTogglingCloud, setIsTogglingCloud] = useState(false);
 
   // Fetch memory stats
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const res = await axios.get(`${apiUrl}/api/memory/stats`);
-        setStats(res.data);
-        setStatsError("");
-      } catch {
-        setStats(null);
-        setStatsError("Memory status is unavailable.");
+  const fetchStats = async () => {
+    try {
+      const res = await axios.get(`${apiUrl}/api/memory/stats`);
+      setStats(res.data);
+      if (res.data.cloud_mode_enabled !== undefined) {
+        setIsCloudMode(res.data.cloud_mode_enabled);
       }
-    };
+      setStatsError("");
+    } catch {
+      setStats(null);
+      setStatsError("Memory status is unavailable.");
+    }
+  };
+
+  useEffect(() => {
     fetchStats();
   }, [apiUrl]);
 
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!searchQuery.trim()) return;
+  // Automatically fetch and display relevant Hindsight memory matches for the selected ticket
+  const fetchMatchesForTicket = async (ticket: Ticket | null) => {
     try {
       setSearchError("");
-      const res = await axios.get(`${apiUrl}/api/memory/search?q=${encodeURIComponent(searchQuery)}`);
+      const query = ticket
+        ? (ticket.error_signature || ticket.title || "").trim()
+        : "incident failure recovery";
+      const res = await axios.get(
+        `${apiUrl}/api/memory/search?q=${encodeURIComponent(query)}&limit=5`
+      );
+      let matches: MemorySearchResult[] = res.data || [];
+
+      // If no direct matches returned, synthesize the ticket's own verified or suggested pattern
+      if (ticket && matches.length === 0 && ticket.diagnostic_insights) {
+        matches = [
+          {
+            ticket_id: ticket.diagnostic_insights.matched_ticket_id || ticket.id,
+            confidence: (ticket.diagnostic_insights.confidence_percent || 85) / 100,
+            resolution_steps: ticket.diagnostic_insights.recommended_solution,
+            error_signature:
+              ticket.diagnostic_insights.detected_signature || ticket.error_signature,
+            resolution_type: ticket.resolution_type || "AUTONOMOUS",
+            metadata: { title: ticket.diagnostic_insights.matched_pattern_title },
+            timestamp: new Date().toISOString(),
+          },
+        ];
+      }
+      setSearchResults(matches);
+    } catch (error) {
+      console.error("Error fetching Hindsight memory matches", error);
+    }
+  };
+
+  // Re-fetch matches whenever the active ticket changes
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      fetchMatchesForTicket(currentTicket);
+    }
+  }, [currentTicket?.id, apiUrl]);
+
+  const handleToggleCloudMode = async () => {
+    setIsTogglingCloud(true);
+    try {
+      const res = await axios.post(`${apiUrl}/api/memory/toggle-cloud-mode`, {
+        enabled: !isCloudMode,
+      });
+      setIsCloudMode(res.data.cloud_mode_enabled);
+      if (res.data.stats) {
+        setStats(res.data.stats);
+      }
+      // Re-fetch matches in the new mode
+      fetchMatchesForTicket(currentTicket);
+    } catch (err) {
+      console.error("Failed to toggle cloud mode", err);
+    } finally {
+      setIsTogglingCloud(false);
+    }
+  };
+
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) {
+      fetchMatchesForTicket(currentTicket);
+      return;
+    }
+    try {
+      setSearchError("");
+      const res = await axios.get(
+        `${apiUrl}/api/memory/search?q=${encodeURIComponent(searchQuery)}`
+      );
       setSearchResults(res.data);
     } catch (error) {
       setSearchResults([]);
@@ -70,18 +141,37 @@ export const MemoryInspector: React.FC<MemoryInspectorProps> = ({
 
   return (
     <div className="w-80 xl:w-92 border-l border-slate-200 dark:border-[#22222e] bg-slate-50 dark:bg-[#101015] flex flex-col h-[calc(100vh-4rem)] shrink-0 select-none overflow-hidden transition-colors">
-      {/* Header */}
-      <div className="px-4 py-3.5 border-b border-slate-200 dark:border-[#22222e] flex items-center justify-between bg-white dark:bg-[#121217]">
-        <div className="flex items-center space-x-2.5">
+      {/* Header with Cloud Mode Toggle Button */}
+      <div className="px-4 py-3 border-b border-slate-200 dark:border-[#22222e] flex items-center justify-between bg-white dark:bg-[#121217]">
+        <div className="flex items-center space-x-2">
           <Brain className="w-4.5 h-4.5 text-yellow-500" />
           <h2 className="text-sm font-extrabold tracking-wider text-slate-800 dark:text-zinc-200 uppercase">
             MEMORY INSPECTOR <span className="text-slate-400 dark:text-zinc-500 font-semibold">(Hindsight)</span>
           </h2>
         </div>
-        <span
-          className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"
-          title="Vectorize Hindsight Memory Bank Online"
-        />
+
+        {/* Toggle Cloud Mode Button */}
+        <button
+          onClick={handleToggleCloudMode}
+          disabled={isTogglingCloud}
+          className={`px-2.5 py-1 rounded-full text-[10.5px] font-bold flex items-center space-x-1.5 transition-all duration-150 border shadow-2xs hover:scale-102 active:scale-98 ${
+            isCloudMode
+              ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/25"
+              : "bg-amber-500/15 border-amber-500/40 text-amber-700 dark:text-amber-300 hover:bg-amber-500/25"
+          }`}
+          title={
+            isCloudMode
+              ? "Hindsight Cloud Active (Using Live Credits). Click to toggle Credit Saver."
+              : "Credit Saver Active (Local Vector Cache). Click to toggle Cloud Mode."
+          }
+        >
+          <Cloud
+            className={`w-3.5 h-3.5 ${
+              isCloudMode ? "text-emerald-500 animate-pulse" : "text-amber-500"
+            }`}
+          />
+          <span>{isCloudMode ? "CLOUD (ONLINE)" : "LOCAL (SAVER)"}</span>
+        </button>
       </div>
 
       {/* Search Input */}
@@ -98,11 +188,26 @@ export const MemoryInspector: React.FC<MemoryInspectorProps> = ({
         </form>
 
         <div className="mt-2.5 flex items-center justify-between text-[11px] font-semibold px-0.5">
-          <span className="flex items-center space-x-1.5 text-emerald-600 dark:text-emerald-400">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block animate-pulse" />
-            <span>Fallback System Active</span>
+          {isCloudMode ? (
+            <span className="flex items-center space-x-1.5 text-emerald-600 dark:text-emerald-400">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block animate-pulse" />
+              <span>Hindsight Cloud Online</span>
+            </span>
+          ) : (
+            <span className="flex items-center space-x-1.5 text-amber-600 dark:text-amber-400">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block" />
+              <span>Credit Saver (Local)</span>
+            </span>
+          )}
+          <span
+            className={
+              isCloudMode
+                ? "text-emerald-600 dark:text-emerald-400 text-[10px] uppercase font-bold tracking-wider"
+                : "text-yellow-600 dark:text-yellow-400 text-[10px] uppercase font-bold tracking-wider"
+            }
+          >
+            {isCloudMode ? "Credits Active" : "Credits Protected"}
           </span>
-          <span className="text-yellow-600 dark:text-yellow-400 text-[10px] uppercase font-bold tracking-wider">Credits Protected</span>
         </div>
         {searchError && (
           <p role="alert" className="mt-2 text-xs text-red-600 dark:text-red-400">

@@ -32,6 +32,8 @@ from backend.services.hindsight_memory import (
     delete_ticket_memory,
     initialize_hindsight_client,
     record_ticket_resolution,
+    is_cloud_mode,
+    set_cloud_mode,
 )
 from backend.services.vision_parser import parse_ticket
 
@@ -166,6 +168,44 @@ def save_users():
             json.dump(USERS_LIST, f, indent=2)
     except Exception as e:
         logger.error(f"Failed to save users.json: {e}")
+
+
+# Persistent ticket store path
+TICKETS_FILE_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "tickets.json")
+
+
+def save_tickets_to_file():
+    """
+    Persists all tickets to disk so session data is preserved across server reboots.
+    """
+    try:
+        os.makedirs(os.path.dirname(TICKETS_FILE_PATH), exist_ok=True)
+        data = {tid: t.model_dump() for tid, t in TICKET_STORE.items()}
+        with open(TICKETS_FILE_PATH, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+    except Exception as e:
+        logger.warning(f"Could not persist tickets to tickets.json: {e}")
+
+
+def load_tickets_from_file() -> bool:
+    """
+    Loads saved tickets from disk. Returns True if tickets were restored.
+    """
+    global TICKET_STORE
+    if os.path.exists(TICKETS_FILE_PATH):
+        try:
+            with open(TICKETS_FILE_PATH, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                if data and isinstance(data, dict):
+                    restored = {}
+                    for tid, tdict in data.items():
+                        restored[tid] = Ticket(**tdict)
+                    TICKET_STORE = restored
+                    logger.info(f"Restored {len(TICKET_STORE)} persistent tickets from tickets.json")
+                    return True
+        except Exception as e:
+            logger.warning(f"Could not restore tickets from tickets.json: {e}")
+    return False
 
 
 # ==========================================
@@ -346,7 +386,10 @@ async def startup_event():
     load_users()
     initialize_hindsight_client()
 
-    # Preload seed tickets into store and memory
+    # Step 1: Restore persistent tickets from disk if present
+    has_saved_tickets = load_tickets_from_file()
+
+    # Step 2: Ensure baseline seed tickets exist in store and Hindsight memory
     seed_path = os.path.join(os.path.dirname(__file__), "..", "data", "initial_tickets.json")
     if os.path.exists(seed_path):
         try:
@@ -368,51 +411,50 @@ async def startup_event():
                     cloud_document_id=f"{tid.lower()}.txt",
                 )
 
-                # Simulated execution trace for preloaded tickets
-                exec_res = simulate_fix(item["resolution_steps"], tid)
+                # Only populate store from seed if not already present from persistent storage
+                if tid not in TICKET_STORE:
+                    exec_res = simulate_fix(item["resolution_steps"], tid)
+                    guidance = generate_guidance_insights(
+                        title=item["title"],
+                        description=item["description"],
+                        error_signature=item["error_signature"],
+                        ocr_text=item.get("mock_ocr_text", ""),
+                        recall={"confidence": 0.96 if res_type == "AUTONOMOUS" else 0.82, "matched_ticket_id": tid, "resolution_steps": item["resolution_steps"]},
+                    )
 
-                # Synthesize diagnostic guidance
-                guidance = generate_guidance_insights(
-                    title=item["title"],
-                    description=item["description"],
-                    error_signature=item["error_signature"],
-                    ocr_text=item.get("mock_ocr_text", ""),
-                    recall={"confidence": 0.96 if res_type == "AUTONOMOUS" else 0.82, "matched_ticket_id": tid, "resolution_steps": item["resolution_steps"]},
-                )
-
-                ticket_obj = Ticket(
-                    id=tid,
-                    title=item["title"],
-                    description=item["description"],
-                    client_name=item.get("client_name", "IT User"),
-                    priority=item.get("priority", "Medium"),
-                    category=item.get("category", "L1"),
-                    status=status_val,
-                    error_signature=item["error_signature"],
-                    resolution_steps=item["resolution_steps"],
-                    confidence_score=0.96 if res_type == "AUTONOMOUS" else 0.82,
-                    resolution_type=res_type,
-                    execution_result=exec_res,
-                    diagnostic_insights=guidance,
-                    company_id="acme-corp",
-                    created_at=(datetime.datetime.now() - datetime.timedelta(minutes=30)).isoformat(),
-                    resolved_at=datetime.datetime.now().isoformat(),
-                    tags=item.get("tags", []),
-                    messages=[
-                        Message(sender=item.get("client_name", "IT User"), role="user", content=item["description"]),
-                        Message(
-                            sender="Hindsight Agent",
-                            role="agent",
-                            content=(
-                                f"🤖 Diagnostic Intelligence:\n"
-                                f"• Matched Pattern: {guidance.matched_pattern_title} ({guidance.confidence_percent}% confidence)\n"
-                                f"• Root Cause: {guidance.root_cause_analysis}\n\n"
-                                f"Actionable Remediation Protocol:\n{guidance.recommended_solution}"
+                    ticket_obj = Ticket(
+                        id=tid,
+                        title=item["title"],
+                        description=item["description"],
+                        client_name=item.get("client_name", "IT User"),
+                        priority=item.get("priority", "Medium"),
+                        category=item.get("category", "L1"),
+                        status=status_val,
+                        error_signature=item["error_signature"],
+                        resolution_steps=item["resolution_steps"],
+                        confidence_score=0.96 if res_type == "AUTONOMOUS" else 0.82,
+                        resolution_type=res_type,
+                        execution_result=exec_res,
+                        diagnostic_insights=guidance,
+                        company_id="acme-corp",
+                        created_at=(datetime.datetime.now() - datetime.timedelta(minutes=30)).isoformat(),
+                        resolved_at=datetime.datetime.now().isoformat(),
+                        tags=item.get("tags", []),
+                        messages=[
+                            Message(sender=item.get("client_name", "IT User"), role="user", content=item["description"]),
+                            Message(
+                                sender="Hindsight Agent",
+                                role="agent",
+                                content=(
+                                    f"🤖 Diagnostic Intelligence:\n"
+                                    f"• Matched Pattern: {guidance.matched_pattern_title} ({guidance.confidence_percent}% confidence)\n"
+                                    f"• Root Cause: {guidance.root_cause_analysis}\n\n"
+                                    f"Actionable Remediation Protocol:\n{guidance.recommended_solution}"
+                                ),
                             ),
-                        ),
-                    ],
-                )
-                TICKET_STORE[tid] = ticket_obj
+                        ],
+                    )
+                    TICKET_STORE[tid] = ticket_obj
 
             # Purge ticket 123 from store and knowledge memory as explicitly requested
             for purge_id in ["TICKET-123", "123", "TICK-123"]:
@@ -421,7 +463,9 @@ async def startup_event():
             await adelete_ticket_memory("TICKET-123")
             await adelete_ticket_memory("123")
 
-            logger.info(f"Loaded {len(TICKET_STORE)} initial tickets into memory store.")
+            # Persist merged store to file
+            save_tickets_to_file()
+            logger.info(f"Loaded and verified {len(TICKET_STORE)} tickets in persistent memory store.")
         except Exception as e:
             logger.error(f"Error seeding initial tickets: {e}", exc_info=True)
 
@@ -499,6 +543,7 @@ async def delete_ticket(ticket_id: str):
 
     if found_key:
         del TICKET_STORE[found_key]
+        save_tickets_to_file()
 
     # Purge from Hindsight persistent / local vector memory
     await adelete_ticket_memory(ticket_id)
@@ -662,6 +707,23 @@ async def create_ticket(
     )
 
     TICKET_STORE[ticket_id] = new_ticket
+    save_tickets_to_file()
+
+    # If resolved autonomously, immediately record into Hindsight persistent memory
+    if ticket_status == "RESOLVED_AUTONOMOUSLY":
+        record_ticket_resolution(
+            ticket_id=ticket_id,
+            error_signature=error_signature,
+            resolution_steps=guidance.recommended_solution,
+            resolution_type="AUTONOMOUS",
+            metadata={
+                "title": title,
+                "category": category,
+                "priority": priority,
+                "client_name": client_name,
+            },
+        )
+
     logger.info(f"Ticket {ticket_id} processed. Status: {ticket_status} (Confidence: {confidence:.2f})")
     return new_ticket
 
@@ -722,6 +784,7 @@ def submit_feedback(ticket_id: str, payload: FeedbackRequest):
         )
     )
 
+    save_tickets_to_file()
     logger.info(f"Ticket {ticket_id} resolved via Human-in-the-Loop by {payload.approved_by}.")
     return ticket
 
@@ -818,8 +881,26 @@ def update_ticket_status(ticket_id: str, payload: StatusUpdateRequest):
     if not ticket:
         raise HTTPException(status_code=404, detail="Ticket not found.")
     ticket.status = payload.status
-    if "RESOLVED" in payload.status and not ticket.resolved_at:
-        ticket.resolved_at = datetime.datetime.now().isoformat()
+    if "RESOLVED" in payload.status:
+        if not ticket.resolved_at:
+            ticket.resolved_at = datetime.datetime.now().isoformat()
+        res_type = "AUTONOMOUS" if "AUTONOMOUS" in payload.status else "HUMAN_IN_THE_LOOP"
+        ticket.resolution_type = res_type
+        # Record resolution to Hindsight memory
+        steps = ticket.resolution_steps or (ticket.diagnostic_insights.recommended_solution if ticket.diagnostic_insights else "Status updated to resolved.")
+        record_ticket_resolution(
+            ticket_id=ticket.id,
+            error_signature=ticket.error_signature,
+            resolution_steps=steps,
+            resolution_type=res_type,
+            metadata={
+                "title": ticket.title,
+                "category": ticket.category,
+                "priority": ticket.priority,
+                "client_name": ticket.client_name,
+            },
+        )
+
     ticket.messages.append(
         Message(
             sender=payload.updated_by or "Engineer",
@@ -827,6 +908,7 @@ def update_ticket_status(ticket_id: str, payload: StatusUpdateRequest):
             content=f"Ticket status changed to: {payload.status.replace('_', ' ')}",
         )
     )
+    save_tickets_to_file()
     return ticket
 
 
@@ -835,9 +917,29 @@ async def memory_stats():
     return await aget_memory_stats()
 
 
+class CloudModeToggleRequest(BaseModel):
+    enabled: Optional[bool] = None
+
+
+@app.post("/api/memory/toggle-cloud-mode", tags=["Hindsight Memory"])
+async def toggle_cloud_mode_api(payload: Optional[CloudModeToggleRequest] = None):
+    """
+    Toggles between Hindsight Cloud (Live Credits) and Local Credit Saver fallback.
+    """
+    target = payload.enabled if (payload and payload.enabled is not None) else not is_cloud_mode()
+    new_state = set_cloud_mode(target)
+    stats = await aget_memory_stats()
+    return {
+        "cloud_mode_enabled": new_state,
+        "is_cloud_connected": stats["is_cloud_connected"],
+        "message": "Switched to Hindsight Cloud (Live Credits)" if new_state else "Switched to Local Credit Saver",
+        "stats": stats,
+    }
+
+
 @app.get("/api/memory/search", tags=["Hindsight Memory"])
-async def memory_search(q: str = Query(..., min_length=1), limit: int = Query(5, ge=1, le=50)):
-    return await asearch_memory(q, limit=limit)
+async def memory_search(q: Optional[str] = Query(None), limit: int = Query(5, ge=1, le=50)):
+    return await asearch_memory(q or "", limit=limit)
 
 
 class HindsightConfigRequest(BaseModel):
