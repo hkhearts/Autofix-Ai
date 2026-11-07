@@ -1,0 +1,157 @@
+# AutoFix.ai – Intelligent Self-Healing IT Support Platform
+
+## Speaker 1 – Introduction, Architecture & Core Concept
+
+### 0:00–0:10 | Project Structure
+
+"Hello everyone! We are presenting AutoFix.ai, an intelligent self-healing IT support platform designed to automate repetitive IT ticket resolution using AI agents and persistent memory.
+
+Here, you can see our complete project structure, including the frontend, backend, and README documentation."
+
+### 0:10–0:29 | One-Click Startup
+
+"To make the deployment and execution process easier, we have implemented a single-click startup mechanism using our `start.bat` file.
+
+With just one click, both the frontend and backend servers are initialized automatically, eliminating the need to start each service separately."
+
+### 0:29–0:45 | AutoFix AI CLI
+
+"Once the servers are running, our AutoFix AI CLI provides the execution status and access to the application.
+
+By opening the localhost URL, we can directly access our web-based platform."
+
+### 0:45–1:10 | Landing Page
+
+"This is the AutoFix.ai landing page.
+
+Our platform combines three major capabilities: multimodal Vision OCR for extracting information from ticket screenshots, intelligent ticket integration, and Hindsight-powered persistent memory.
+
+We have also incorporated a human-in-the-loop workflow to ensure that AI-generated resolutions are reviewed and validated before becoming reusable knowledge."
+
+### 1:10–1:25 | How It Works
+
+"Under the How It Works section, we explain the overall workflow of our system.
+
+The platform captures incoming IT issues, extracts relevant information, searches previously resolved incidents, and uses an AI agent to identify potential solutions."
+
+### 1:25–1:45 | Console Preview
+
+"Now, let's move into the actual application through the Console.
+
+This is our prototype dashboard. On the left, we have the incoming ticket interface, and on the right, we have the Hindsight Insight Memory Inspector.
+
+We have also implemented both dark and light themes to make the interface adaptable."
+
+### 1:45–2:00 | Problem Statement
+
+"Before moving into the live demonstration, let's understand the problem we are solving.
+
+In IT support environments, L1 and L2 support teams frequently receive repeated tickets reporting identical errors.
+
+Even though these issues may have already been resolved previously, support engineers often need to investigate and resolve them again.
+
+This creates repetitive work, increases resolution time, and reduces overall support efficiency.
+
+AutoFix.ai addresses this problem through a self-learning and self-healing approach."
+
+---
+
+## Speaker 2 – Intelligent Agent, Live Demo & Performance
+
+### 2:00–2:20 | Agent & Knowledge Graph
+
+"To solve this problem, we developed an intelligent AI agent connected to a persistent knowledge system.
+
+Our agent uses Hindsight to recall previously resolved incidents and their corresponding remedies.
+
+The knowledge is organized through a connected, node-and-graph-based memory structure, allowing the agent to identify relationships between incoming tickets and previously learned solutions."
+
+### 2:20–2:40 | Creating the First Ticket
+
+"Let's see how this works in practice.
+
+Here, I am creating a new ticket using a commonly encountered Blue Screen of Death error.
+
+Since this is the first occurrence of this particular issue in our knowledge base, the system initially produces a low confidence score of approximately 6%.
+
+At this stage, the agent does not have sufficient verified historical knowledge to recommend an automatic resolution."
+
+### 2:40–3:10 | Second Ticket & Hindsight Recall
+
+"Now, I am uploading another Blue Screen error screenshot captured from a different laptop.
+
+Our Vision OCR pipeline extracts the relevant information from the screenshot, and the agent begins comparing it with previously processed tickets.
+
+This time, the system identifies a similarity with our first ticket and generates a confidence score of approximately 67%.
+
+You can also see the matching Hindsight ticket ID and the previously suggested remedy.
+
+This demonstrates how the agent uses persistent memory to recognize recurring issues instead of treating every ticket as an entirely new problem."
+
+### 3:10–3:35 | Human-in-the-Loop Approval
+
+"An important feature of our system is the human-in-the-loop approval mechanism.
+
+The agent does not immediately add every newly identified solution to its permanent knowledge base.
+
+The proposed resolution first goes through a review and approval process.
+
+Only after a human approves the ticket does the verified resolution become available as reusable knowledge in Hindsight.
+
+This prevents unverified solutions from becoming trusted memory and helps the system improve through validated experiences."
+
+### 3:35–3:55 | Confidence Threshold
+
+"We have also implemented a configurable confidence threshold.
+
+When the confidence score reaches or exceeds the configured threshold of 85%, the system can qualify the resolution for the automatic approval workflow.
+
+When the score is below 85%, the ticket is routed to the manual review process.
+
+This gives organizations control over how much automation they want while maintaining human oversight."
+
+### 3:55–4:15 | Performance Dashboard
+
+"Next, let's look at the Performance section.
+
+This dashboard provides insights into agent execution, verification performance, and self-healing telemetry.
+
+In our current prototype, the measured execution latency is approximately 18 milliseconds.
+
+This helps demonstrate the speed of our optimized ticket-matching and memory-retrieval workflow."
+
+### 4:15–4:35 | Settings & Configuration
+
+"In the Settings section, administrators can configure the confidence threshold using the interactive slider.
+
+They can increase or decrease the threshold depending on their organization's requirements and preferred level of automation.
+
+We have also integrated our configurable AI model setup, including Grok and Llama-based model configurations for experimentation and testing."
+
+### 4:35–4:55 | Hindsight Cloud Integration
+
+"Moving beyond the application, we have also integrated Hindsight Cloud as our persistent memory infrastructure.
+
+Here, you can see the memory and observation interfaces.
+
+The system stores and retrieves contextual knowledge through its connected memory structure, allowing the agent to recall previous incidents and their verified resolutions.
+
+This is what enables AutoFix.ai to learn from past interactions rather than relying only on the current ticket."
+
+### 4:55–5:15 | Technology & Deployment
+
+"Our application uses a separate frontend and backend architecture, with AI-powered ticket analysis, Vision OCR, and Hindsight persistent memory integration.
+
+We have used Render and our web deployment setup to make the prototype accessible beyond the local development environment.
+
+The architecture is designed to support modular improvements and future integrations with enterprise IT support workflows."
+
+### 5:15–5:30 | Conclusion
+
+"To conclude, AutoFix.ai is more than a conventional IT ticket management platform.
+
+It is a self-healing IT support system that combines multimodal extraction, intelligent ticket matching, persistent knowledge, and human-in-the-loop validation.
+
+Our goal is to reduce repetitive L1 and L2 support workloads while continuously improving the quality and speed of incident resolution.
+
+Thank you!"
