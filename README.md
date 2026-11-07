@@ -564,22 +564,32 @@ docker compose up --build
 <table align="center" width="100%">
   <tr>
     <td align="center" width="50%">
-      <img src="02_Project_Screenshots/Ticket Creation.png" alt="Ticket Creation & Screenshot Analysis" width="100%">
+      <img src="Document/02_Project_Screenshots/Ticket Creation.png" alt="Ticket Creation & Screenshot Analysis" width="100%">
       <br><em>Multimodal Vision OCR Ticket Ingestion</em>
     </td>
     <td align="center" width="50%">
-      <img src="02_Project_Screenshots/HindSight Memory.png" alt="Hindsight Persistent Memory Inspector" width="100%">
+      <img src="Document/02_Project_Screenshots/HindSight Memory.png" alt="Hindsight Persistent Memory Inspector" width="100%">
       <br><em>Hindsight Memory Inspector & Knowledge Tree</em>
     </td>
   </tr>
   <tr>
     <td align="center" width="50%">
-      <img src="02_Project_Screenshots/Confidence Threshhold.png" alt="Autonomous Confidence Threshold" width="100%">
+      <img src="Document/02_Project_Screenshots/Confidence Threshhold.png" alt="Autonomous Confidence Threshold" width="100%">
       <br><em>Autonomous Decision Gate ($C \ge 0.85$)</em>
     </td>
     <td align="center" width="50%">
-      <img src="02_Project_Screenshots/Ticket Status menu.png" alt="Human-in-the-Loop Status Review" width="100%">
+      <img src="Document/02_Project_Screenshots/Ticket Status menu.png" alt="Human-in-the-Loop Status Review" width="100%">
       <br><em>Human-in-the-Loop Verification & Status Control</em>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
+      <img src="Document/02_Project_Screenshots/Perfomance.png" alt="System Performance Analytics" width="100%">
+      <br><em>System Performance Analytics & FCR Metrics</em>
+    </td>
+    <td align="center" width="50%">
+      <img src="Document/02_Project_Screenshots/Settings.png" alt="Settings & Hindsight Memory Cloud Connection" width="100%">
+      <br><em>Hindsight Cloud Connection & Bank Management</em>
     </td>
   </tr>
 </table>
