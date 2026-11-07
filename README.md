@@ -607,6 +607,7 @@ Autofix-AI is continuously deployed on Render Cloud using Infrastructure-as-Code
 | **Interactive API Docs** | [https://autofix-ai-backend-51vk.onrender.com/docs](https://autofix-ai-backend-51vk.onrender.com/docs) | Interactive Swagger UI for testing ingestion and feedback endpoints |
 | **System Health & Telemetry** | [https://autofix-ai-backend-51vk.onrender.com/health](https://autofix-ai-backend-51vk.onrender.com/health) | Live JSON health check, Hindsight connection status, and memory stats |
 | **Hindsight Cloud Console** | [https://ui.hindsight.vectorize.io](https://ui.hindsight.vectorize.io) | Memory bank inspector and incident vector dashboard (`autofix_ai_tickets`) |
+| **Official Demo Script** | [`Document/03_Demo_Assets/Demo Script.txt`](Document/03_Demo_Assets/Demo%20Script.txt) | Two-speaker timed script covering Vision OCR, Cold Start, HITL, & Memory Recall |
 
 ---
 
