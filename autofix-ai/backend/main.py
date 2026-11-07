@@ -23,12 +23,13 @@ from pydantic import BaseModel, Field
 from backend.services.executor import ExecutionResult, simulate_fix
 from backend.services.hindsight_memory import (
     CONFIDENCE_THRESHOLD,
-    get_memory_stats,
+    aget_memory_stats,
+    arecall_resolution,
+    arecord_ticket_resolution,
+    asearch_memory,
+    atest_cloud_connection,
     initialize_hindsight_client,
-    recall_resolution,
     record_ticket_resolution,
-    search_memory,
-    test_cloud_connection,
 )
 from backend.services.vision_parser import parse_ticket
 
@@ -356,7 +357,7 @@ async def startup_event():
                 status_val = "RESOLVED_AUTONOMOUSLY" if res_type == "AUTONOMOUS" else "RESOLVED_HUMAN_VERIFIED"
                 
                 # Ingest to Hindsight memory
-                record_ticket_resolution(
+                await arecord_ticket_resolution(
                     ticket_id=tid,
                     error_signature=item["error_signature"],
                     resolution_steps=item["resolution_steps"],
@@ -463,8 +464,8 @@ async def startup_event():
 # ==========================================
 
 @app.get("/health", tags=["System"])
-def health_check():
-    stats = get_memory_stats()
+async def health_check():
+    stats = await aget_memory_stats()
     return {
         "status": "ok",
         "service": "Autofix-AI Orchestrator",
@@ -554,7 +555,7 @@ async def create_ticket(
     ocr_text = parsed["raw_ocr_text"]
 
     # Step 2: Query Hindsight Memory
-    recall = recall_resolution(error_signature, query_text=f"{title} {description}")
+    recall = await arecall_resolution(error_signature, query_text=f"{title} {description}")
     confidence = recall["confidence"]
     matched_steps = recall["resolution_steps"]
 
@@ -585,7 +586,7 @@ async def create_ticket(
         res_type = "AUTONOMOUS"
 
         # Universal Learning Hook: Record resolution immediately
-        record_ticket_resolution(
+        await arecord_ticket_resolution(
             ticket_id=ticket_id,
             error_signature=error_signature,
             resolution_steps=matched_steps,
@@ -761,7 +762,7 @@ async def upload_ticket_screenshot(
     ticket.error_signature = error_signature
 
     # Query Hindsight memory
-    recall = recall_resolution(error_signature, query_text=f"{ticket.title} {ticket.description}")
+    recall = await arecall_resolution(error_signature, query_text=f"{ticket.title} {ticket.description}")
     confidence = recall.get("confidence", 0.0)
     ticket.confidence_score = confidence if confidence > 0 else 0.82
 
@@ -826,13 +827,13 @@ def update_ticket_status(ticket_id: str, payload: StatusUpdateRequest):
 
 
 @app.get("/api/memory/stats", tags=["Hindsight Memory"])
-def memory_stats():
-    return get_memory_stats()
+async def memory_stats():
+    return await aget_memory_stats()
 
 
 @app.get("/api/memory/search", tags=["Hindsight Memory"])
-def memory_search(q: str = Query(..., min_length=1), limit: int = Query(5, ge=1, le=50)):
-    return search_memory(q, limit=limit)
+async def memory_search(q: str = Query(..., min_length=1), limit: int = Query(5, ge=1, le=50)):
+    return await asearch_memory(q, limit=limit)
 
 
 class HindsightConfigRequest(BaseModel):
@@ -842,7 +843,7 @@ class HindsightConfigRequest(BaseModel):
 
 
 @app.post("/api/settings/hindsight", tags=["Hindsight Memory"])
-def configure_hindsight_cloud(payload: HindsightConfigRequest):
+async def configure_hindsight_cloud(payload: HindsightConfigRequest):
     """
     Validates and switches to Hindsight Cloud (https://api.hindsight.vectorize.io)
     """
@@ -850,7 +851,7 @@ def configure_hindsight_cloud(payload: HindsightConfigRequest):
     url = (payload.base_url or "https://api.hindsight.vectorize.io").strip()
     bank = (payload.bank_id or "autofix_ai_tickets").strip()
 
-    test_res = test_cloud_connection(api_key=key, base_url=url, bank_id=bank)
+    test_res = await atest_cloud_connection(api_key=key, base_url=url, bank_id=bank)
     if test_res.get("connected"):
         initialize_hindsight_client(api_key=key, base_url=url, bank_id=bank, force_reinit=True)
 

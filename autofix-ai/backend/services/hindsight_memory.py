@@ -5,6 +5,7 @@ Provides persistent agent memory, multi-strategy semantic recall, and reflect re
 Includes local fallback vector memory for offline resilience during testing.
 """
 
+import asyncio
 import datetime
 import json
 import logging
@@ -130,7 +131,11 @@ def initialize_hindsight_client(
     return _hindsight_client
 
 
-def test_cloud_connection(api_key: str, base_url: str = "https://api.hindsight.vectorize.io", bank_id: str = "autofix_ai_tickets") -> Dict[str, Any]:
+async def atest_cloud_connection(
+    api_key: str,
+    base_url: str = "https://api.hindsight.vectorize.io",
+    bank_id: str = "autofix_ai_tickets",
+) -> Dict[str, Any]:
     """
     Tests live connectivity to Hindsight Cloud using the provided API key.
     """
@@ -141,7 +146,7 @@ def test_cloud_connection(api_key: str, base_url: str = "https://api.hindsight.v
         from hindsight_client import Hindsight
         test_client = Hindsight(base_url=base_url, api_key=api_key.strip(), timeout=10.0)
         # Attempt recall query as probe
-        res = test_client.recall(bank_id=bank_id, query="ping connection health check", max_tokens=100)
+        await test_client.arecall(bank_id=bank_id, query="ping connection health check", max_tokens=100)
         return {
             "connected": True,
             "message": f"Successfully authenticated with Hindsight Cloud at {base_url} (Bank: {bank_id})",
@@ -157,7 +162,15 @@ def test_cloud_connection(api_key: str, base_url: str = "https://api.hindsight.v
         }
 
 
-def recall_resolution(error_signature: str, query_text: str = "") -> Dict[str, Any]:
+def test_cloud_connection(
+    api_key: str,
+    base_url: str = "https://api.hindsight.vectorize.io",
+    bank_id: str = "autofix_ai_tickets",
+) -> Dict[str, Any]:
+    return asyncio.run(atest_cloud_connection(api_key, base_url, bank_id))
+
+
+async def arecall_resolution(error_signature: str, query_text: str = "") -> Dict[str, Any]:
     """
     Queries Hindsight memory for matching historical error signatures or OCR text patterns.
     Returns confidence score and previous verified resolution steps.
@@ -168,7 +181,7 @@ def recall_resolution(error_signature: str, query_text: str = "") -> Dict[str, A
     # 1. Try Vectorize Hindsight Cloud SDK if connected
     if _hindsight_client:
         try:
-            results = _hindsight_client.recall(
+            results = await _hindsight_client.arecall(
                 bank_id=HINDSIGHT_BANK_ID,
                 query=search_query,
                 max_tokens=2048,
@@ -222,6 +235,10 @@ def recall_resolution(error_signature: str, query_text: str = "") -> Dict[str, A
     }
 
 
+def recall_resolution(error_signature: str, query_text: str = "") -> Dict[str, Any]:
+    return asyncio.run(arecall_resolution(error_signature, query_text))
+
+
 def reflect_resolution(query_text: str) -> Optional[str]:
     """
     Utilizes Hindsight Cloud's reflect API to synthesize reasoned troubleshooting guidance.
@@ -240,7 +257,7 @@ def reflect_resolution(query_text: str) -> Optional[str]:
     return None
 
 
-def record_ticket_resolution(
+async def arecord_ticket_resolution(
     ticket_id: str,
     error_signature: str,
     resolution_steps: str,
@@ -284,7 +301,7 @@ def record_ticket_resolution(
                 f"RESOLUTION_STEPS:\n{resolution_steps}\n"
                 f"METADATA: {json.dumps(cloud_metadata)}"
             )
-            _hindsight_client.retain(
+            await _hindsight_client.aretain(
                 bank_id=HINDSIGHT_BANK_ID,
                 content=content_payload,
                 document_id=cloud_document_id or ticket_id,
@@ -307,7 +324,27 @@ def record_ticket_resolution(
     return True
 
 
-def get_memory_stats() -> Dict[str, Any]:
+def record_ticket_resolution(
+    ticket_id: str,
+    error_signature: str,
+    resolution_steps: str,
+    resolution_type: str,
+    metadata: Optional[Dict[str, Any]] = None,
+    cloud_document_id: Optional[str] = None,
+) -> bool:
+    return asyncio.run(
+        arecord_ticket_resolution(
+            ticket_id=ticket_id,
+            error_signature=error_signature,
+            resolution_steps=resolution_steps,
+            resolution_type=resolution_type,
+            metadata=metadata,
+            cloud_document_id=cloud_document_id,
+        )
+    )
+
+
+async def aget_memory_stats() -> Dict[str, Any]:
     """
     Returns current memory bank metrics for the frontend Memory Inspector and Settings view.
     """
@@ -321,7 +358,7 @@ def get_memory_stats() -> Dict[str, Any]:
 
     if _hindsight_client:
         try:
-            memories = _hindsight_client.list_memories(
+            memories = await _hindsight_client.alist_memories(
                 bank_id=HINDSIGHT_BANK_ID,
                 limit=1000,
                 offset=0,
@@ -369,14 +406,18 @@ def get_memory_stats() -> Dict[str, Any]:
     }
 
 
-def search_memory(query: str, limit: int = 5) -> List[Dict[str, Any]]:
+def get_memory_stats() -> Dict[str, Any]:
+    return asyncio.run(aget_memory_stats())
+
+
+async def asearch_memory(query: str, limit: int = 5) -> List[Dict[str, Any]]:
     """
     Search Hindsight Cloud when available, with local vector memory as a fallback.
     """
     initialize_hindsight_client()
     if _hindsight_client:
         try:
-            results = _hindsight_client.recall(
+            results = await _hindsight_client.arecall(
                 bank_id=HINDSIGHT_BANK_ID,
                 query=query,
                 max_tokens=max(512, limit * 512),
@@ -405,3 +446,7 @@ def search_memory(query: str, limit: int = 5) -> List[Dict[str, Any]]:
             logger.warning(f"Hindsight Cloud memory search failed: {e}. Falling back to local memory.")
 
     return _local_store.search(query, top_k=limit)
+
+
+def search_memory(query: str, limit: int = 5) -> List[Dict[str, Any]]:
+    return asyncio.run(asearch_memory(query, limit))
