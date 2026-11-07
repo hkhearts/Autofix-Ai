@@ -246,6 +246,7 @@ def record_ticket_resolution(
     resolution_steps: str,
     resolution_type: str,
     metadata: Optional[Dict[str, Any]] = None,
+    cloud_document_id: Optional[str] = None,
 ) -> bool:
     """
     Universal Post-Resolution Ingestion Hook.
@@ -262,6 +263,11 @@ def record_ticket_resolution(
 
     metadata = metadata or {}
     meta_tags = [res_type.lower(), metadata.get("category", "L1").lower()]
+    cloud_metadata = {
+        key: metadata[key]
+        for key in ("category", "priority", "title")
+        if isinstance(metadata.get(key), str)
+    }
 
     # Always persist to local vector store
     _local_store.add(ticket_id, error_signature, resolution_steps, res_type, metadata)
@@ -276,16 +282,25 @@ def record_ticket_resolution(
                 f"ERROR_SIGNATURE: {error_signature}\n"
                 f"RESOLUTION_TYPE: {res_type}\n"
                 f"RESOLUTION_STEPS:\n{resolution_steps}\n"
-                f"METADATA: {json.dumps(metadata)}"
+                f"METADATA: {json.dumps(cloud_metadata)}"
             )
             _hindsight_client.retain(
                 bank_id=HINDSIGHT_BANK_ID,
                 content=content_payload,
-                document_id=ticket_id,
+                document_id=cloud_document_id or ticket_id,
                 tags=meta_tags,
-                metadata={"signature": error_signature, "type": res_type},
+                metadata={
+                    **cloud_metadata,
+                    "signature": error_signature,
+                    "type": res_type,
+                    "ticket_id": ticket_id,
+                },
+                update_mode="replace",
             )
-            logger.info(f"Successfully retained ticket {ticket_id} to Hindsight Cloud ({HINDSIGHT_BANK_ID}).")
+            logger.info(
+                f"Successfully retained ticket {ticket_id} to Hindsight Cloud "
+                f"({HINDSIGHT_BANK_ID}, document: {cloud_document_id or ticket_id})."
+            )
         except Exception as e:
             logger.warning(f"Hindsight Cloud retain call failed: {e}. Stored in local fallback.")
 
@@ -300,16 +315,54 @@ def get_memory_stats() -> Dict[str, Any]:
     total_local = len(_local_store.records)
     autonomous_count = sum(1 for r in _local_store.records.values() if r["resolution_type"] == "AUTONOMOUS")
     hitl_count = total_local - autonomous_count
+    total_records = total_local
+    cloud_connected = False
+    last_updated = _local_store.last_updated
+
+    if _hindsight_client:
+        try:
+            documents = _hindsight_client.documents.list_documents(
+                bank_id=HINDSIGHT_BANK_ID,
+                limit=1,
+                offset=0,
+            )
+            total_records = documents.total
+            cloud_connected = True
+            if documents.items and documents.items[0].updated_at:
+                last_updated = documents.items[0].updated_at
+
+            autonomous_count = _hindsight_client.documents.list_documents(
+                bank_id=HINDSIGHT_BANK_ID,
+                tags=["autonomous"],
+                tags_match="any_strict",
+                limit=1,
+                offset=0,
+            ).total
+            hitl_count = _hindsight_client.documents.list_documents(
+                bank_id=HINDSIGHT_BANK_ID,
+                tags=["human_in_the_loop"],
+                tags_match="any_strict",
+                limit=1,
+                offset=0,
+            ).total
+        except Exception as e:
+            logger.warning(f"Hindsight Cloud stats request failed: {e}. Reporting local memory stats.")
+            total_records = total_local
+            autonomous_count = sum(
+                1 for r in _local_store.records.values() if r["resolution_type"] == "AUTONOMOUS"
+            )
+            hitl_count = total_local - autonomous_count
+            last_updated = _local_store.last_updated
 
     return {
         "bank_id": HINDSIGHT_BANK_ID,
         "base_url": HINDSIGHT_BASE_URL,
-        "is_cloud_connected": bool(_hindsight_client is not None),
-        "total_records": total_local,
+        "is_cloud_connected": cloud_connected,
+        "total_records": total_records,
         "autonomous_resolutions": autonomous_count,
         "human_verified_resolutions": hitl_count,
         "confidence_threshold": CONFIDENCE_THRESHOLD,
-        "last_updated": _local_store.last_updated,
+        "last_updated": last_updated,
         "promo_code": "MEMHACK99",
         "cloud_console_url": "https://ui.hindsight.vectorize.io",
         "docs_url": "https://hindsight.vectorize.io/",
@@ -319,6 +372,37 @@ def get_memory_stats() -> Dict[str, Any]:
 
 def search_memory(query: str, limit: int = 5) -> List[Dict[str, Any]]:
     """
-    Interactive semantic search for the Memory Inspector sidebar.
+    Search Hindsight Cloud when available, with local vector memory as a fallback.
     """
+    initialize_hindsight_client()
+    if _hindsight_client:
+        try:
+            results = _hindsight_client.recall(
+                bank_id=HINDSIGHT_BANK_ID,
+                query=query,
+                max_tokens=max(512, limit * 512),
+            )
+            cloud_matches = []
+            for result in (results.results or [])[:limit]:
+                score = 0.0
+                if result.scores:
+                    score = result.scores.final or result.scores.semantic or 0.0
+                metadata = result.metadata or {}
+                cloud_matches.append(
+                    {
+                        "ticket_id": metadata.get("ticket_id") or result.document_id or result.id,
+                        "confidence": round(float(score), 3),
+                        "resolution_steps": result.text,
+                        "error_signature": metadata.get("signature", ""),
+                        "resolution_type": metadata.get("type", ""),
+                        "metadata": metadata,
+                        "timestamp": result.mentioned_at,
+                        "source": "hindsight_cloud",
+                    }
+                )
+            if cloud_matches:
+                return cloud_matches
+        except Exception as e:
+            logger.warning(f"Hindsight Cloud memory search failed: {e}. Falling back to local memory.")
+
     return _local_store.search(query, top_k=limit)

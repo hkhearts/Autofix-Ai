@@ -362,6 +362,7 @@ async def startup_event():
                     resolution_steps=item["resolution_steps"],
                     resolution_type=res_type,
                     metadata=item,
+                    cloud_document_id=f"{tid.lower()}.txt",
                 )
 
                 # Simulated execution trace for preloaded tickets
@@ -830,7 +831,7 @@ def memory_stats():
 
 
 @app.get("/api/memory/search", tags=["Hindsight Memory"])
-def memory_search(q: str = Query(..., min_length=1), limit: int = 5):
+def memory_search(q: str = Query(..., min_length=1), limit: int = Query(5, ge=1, le=50)):
     return search_memory(q, limit=limit)
 
 

@@ -177,7 +177,7 @@
     "description": "Session store microservice threw NOAUTH errors following failover of master redis node to sentinel replica.",
     "mock_ocr_text": "redis.exceptions.ResponseError: NOAUTH Authentication required.\nRedisClusterReplica: Node 10.0.12.44:6379 failed to authenticate with master_auth parameter.",
     "error_signature": "REDIS_CLUSTER_NOAUTH_MASTERAUTH_FAILOVER_MISMATCH",
-    "resolution_steps": "1. Inspect `redis.conf` across sentinel nodes; discovered `masterauth` password missing on replica node 3\n2. Dynamically set authentication password without restart: `CONFIG SET masterauth 'SecretClusterPass!2026'` and `CONFIG REWRITE`\n3. Execute `SENTINEL failover mymaster` to verify seamless quorum handover\n4. All session read/write commands verified healthy across cluster topology.",
+    "resolution_steps": "1. Inspect `redis.conf` across sentinel nodes; discovered `masterauth` password missing on replica node 3\n2. Restore the credential from the approved secret manager using secure handling, then persist the configuration without printing the secret\n3. Execute `SENTINEL failover mymaster` to verify seamless quorum handover\n4. All session read/write commands verified healthy across cluster topology.",
     "resolution_type": "HUMAN_IN_THE_LOOP",
     "tags": ["redis", "cluster", "cache", "noauth", "l2"]
   },

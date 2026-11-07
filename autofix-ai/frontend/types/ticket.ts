@@ -56,6 +56,17 @@ export interface MemoryStats {
   last_updated: string;
 }
 
+export interface MemorySearchResult {
+  ticket_id: string;
+  confidence: number;
+  resolution_steps: string;
+  error_signature: string;
+  resolution_type: string;
+  metadata: Record<string, unknown>;
+  timestamp: string | null;
+  source?: 'hindsight_cloud' | 'local_vector_memory';
+}
+
 export interface UserSession {
   email: string;
   name: string;

@@ -62,6 +62,7 @@ def seed_hindsight(dry_run: bool = False) -> int:
             resolution_steps=resolution,
             resolution_type=res_type,
             metadata=metadata,
+            cloud_document_id=f"{ticket_id.lower()}.txt",
         )
         if ok:
             logger.info(f"✅ [{idx}/{len(tickets)}] Ingested {ticket_id} [{res_type}]: {title[:45]}...")

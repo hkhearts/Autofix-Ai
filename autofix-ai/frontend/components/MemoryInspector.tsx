@@ -9,14 +9,13 @@ import {
   FileText,
   User,
   Users,
-  BookOpen,
   Sparkles,
   TrendingUp,
   Database,
   ExternalLink,
 } from "lucide-react";
 import axios from "axios";
-import { MemoryStats, Ticket } from "../types/ticket";
+import { MemorySearchResult, MemoryStats, Ticket } from "../types/ticket";
 
 interface MemoryInspectorProps {
   currentTicket: Ticket | null;
@@ -29,11 +28,13 @@ export const MemoryInspector: React.FC<MemoryInspectorProps> = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [stats, setStats] = useState<MemoryStats | null>(null);
+  const [statsError, setStatsError] = useState("");
   const [similarCasesOpen, setSimilarCasesOpen] = useState(true);
   const [interactionsOpen, setInteractionsOpen] = useState(true);
   const [articlesOpen, setArticlesOpen] = useState(true);
   const [patternsOpen, setPatternsOpen] = useState(true);
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchError, setSearchError] = useState("");
+  const [searchResults, setSearchResults] = useState<MemorySearchResult[]>([]);
   const [selectedCaseModal, setSelectedCaseModal] = useState<any | null>(null);
 
   // Fetch memory stats
@@ -42,33 +43,30 @@ export const MemoryInspector: React.FC<MemoryInspectorProps> = ({
       try {
         const res = await axios.get(`${apiUrl}/api/memory/stats`);
         setStats(res.data);
-      } catch (e) {
-        setStats({
-          bank_id: "autofix_ai_tickets",
-          is_cloud_connected: false,
-          total_records: 16,
-          autonomous_resolutions: 9,
-          human_verified_resolutions: 7,
-          confidence_threshold: 0.85,
-          last_updated: new Date().toISOString(),
-        });
+        setStatsError("");
+      } catch {
+        setStats(null);
+        setStatsError("Memory status is unavailable.");
       }
     };
     fetchStats();
-  }, [apiUrl, currentTicket]);
+  }, [apiUrl]);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
     try {
+      setSearchError("");
       const res = await axios.get(`${apiUrl}/api/memory/search?q=${encodeURIComponent(searchQuery)}`);
       setSearchResults(res.data);
-    } catch (e) {
-      console.error("Memory search failed", e);
+    } catch (error) {
+      setSearchResults([]);
+      setSearchError("Memory search failed. Check the API connection and try again.");
+      console.error("Memory search failed", error);
     }
   };
 
-  const clientName = currentTicket?.client_name || "Jane Doe";
+  const clientName = currentTicket?.client_name;
 
   return (
     <div className="w-80 xl:w-92 border-l border-slate-200 dark:border-[#22222e] bg-slate-50 dark:bg-[#101015] flex flex-col h-[calc(100vh-4rem)] shrink-0 select-none overflow-hidden transition-colors">
@@ -92,24 +90,29 @@ export const MemoryInspector: React.FC<MemoryInspectorProps> = ({
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-zinc-500" />
           <input
             type="text"
-            placeholder="Search Memory Vectors..."
+            placeholder="Search Hindsight memories..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full h-8.5 pl-9 pr-3 text-xs font-medium rounded-lg bg-white dark:bg-[#181822] border border-slate-200 dark:border-[#2c2c3c] text-slate-900 dark:text-zinc-200 placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-yellow-400"
           />
         </form>
+        {searchError && (
+          <p role="alert" className="mt-2 text-xs text-red-600 dark:text-red-400">
+            {searchError}
+          </p>
+        )}
       </div>
 
       {/* Accordion Content Container */}
       <div className="flex-1 overflow-y-auto p-3 space-y-3 text-xs">
-        {/* Section 1: SIMILAR CASES (Tree Line Structure matching reference UI) */}
+        {/* Section 1: Hindsight search results */}
         <div className="rounded-xl bg-white dark:bg-[#15151e] border border-slate-200 dark:border-[#242432] overflow-hidden shadow-2xs">
           <button
             onClick={() => setSimilarCasesOpen(!similarCasesOpen)}
             className="w-full p-3 flex items-center justify-between text-left hover:bg-slate-50 dark:hover:bg-zinc-800/40 transition-colors"
           >
             <span className="text-xs font-extrabold uppercase tracking-wider text-slate-800 dark:text-zinc-200">
-              SIMILAR CASES (3 found):
+              HINDSIGHT MATCHES ({searchResults.length} found)
             </span>
             <ChevronDown
               className={`w-4 h-4 text-slate-400 transition-transform duration-300 ease-out ${
@@ -120,101 +123,54 @@ export const MemoryInspector: React.FC<MemoryInspectorProps> = ({
 
           {similarCasesOpen && (
             <div className="p-3 pt-0 border-t border-slate-100 dark:border-zinc-800/60">
-              {/* Tree line container */}
-              <div className="relative pl-3 space-y-3 before:absolute before:left-1 before:top-2 before:bottom-3 before:w-0.5 before:bg-slate-200 dark:before:bg-zinc-800">
-                {/* Case 1 */}
-                <div
-                  onClick={() =>
-                    setSelectedCaseModal({
-                      id: "#101, #95",
-                      title: "Critical: Unable to access Salesforce",
-                      match: "96% Vector Match",
-                      solution:
-                        "1. Resync local workstation NTP clock: w32tm /resync /force\n2. Invalidate expired Okta SAML assertion tokens in identity lifecycle pool\n3. Clear Chrome/Edge browser SAML authentication cookies\n4. Re-issue clean SAML challenge; verify 200 OK.",
-                    })
-                  }
-                  className="relative cursor-pointer p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors"
-                >
-                  <div className="flex items-start space-x-2">
-                    <FileText className="w-4 h-4 text-yellow-500 shrink-0 mt-0.5" />
-                    <div>
-                      <p className="font-extrabold text-slate-900 dark:text-zinc-100 text-xs">
-                        #101, #95
-                      </p>
-                      <p className="text-xs text-red-600 dark:text-red-400 font-semibold leading-snug">
-                        Critical: Unable to access Salesforce
-                      </p>
-                      <span className="inline-block mt-1 text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 font-bold border border-emerald-500/30">
-                        96% Vector Match
-                      </span>
+              <div className="space-y-2">
+                {searchResults.map((result) => (
+                  <button
+                    key={`${result.ticket_id}-${result.error_signature}`}
+                    onClick={() =>
+                      setSelectedCaseModal({
+                        id: result.ticket_id,
+                        title: result.error_signature || "Hindsight memory",
+                        match: `${Math.round(result.confidence * 100)}% Hindsight match`,
+                        solution: result.resolution_steps,
+                      })
+                    }
+                    className="w-full text-left p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors"
+                  >
+                    <div className="flex items-start space-x-2">
+                      <FileText className="w-4 h-4 text-yellow-500 shrink-0 mt-0.5" />
+                      <div className="min-w-0">
+                        <p className="font-extrabold text-slate-900 dark:text-zinc-100 text-xs">
+                          {result.ticket_id}
+                        </p>
+                        <p className="text-xs text-slate-600 dark:text-zinc-400 font-semibold leading-snug">
+                          {result.error_signature || "Historical resolution"}
+                        </p>
+                        <span className="inline-block mt-1 text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 font-bold border border-emerald-500/30">
+                          {Math.round(result.confidence * 100)}% match
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                </div>
-
-                {/* Case 2 */}
-                <div
-                  onClick={() =>
-                    setSelectedCaseModal({
-                      id: "#95",
-                      title: "Critical: Unable to access Salesforce",
-                      match: "88% Vector Match",
-                      solution:
-                        "1. Purge stale Kerberos tickets\n2. Rebind user authentication scope in Okta console\n3. Confirm SSO callback URL handshake.",
-                    })
-                  }
-                  className="relative cursor-pointer p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors"
-                >
-                  <div className="flex items-start space-x-2">
-                    <FileText className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
-                    <div>
-                      <p className="font-extrabold text-slate-900 dark:text-zinc-100 text-xs">
-                        #95
-                      </p>
-                      <p className="text-xs text-red-600 dark:text-red-400 font-semibold leading-snug">
-                        Critical: Unable to access Salesforce
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Case 3 */}
-                <div
-                  onClick={() =>
-                    setSelectedCaseModal({
-                      id: "#88",
-                      title: "Critical: Unable to access Salesforce",
-                      match: "82% Vector Match",
-                      solution:
-                        "1. Check Okta System Log for clock skew warning events\n2. Verify client device time against pool.ntp.org\n3. Restart authentication worker.",
-                    })
-                  }
-                  className="relative cursor-pointer p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors"
-                >
-                  <div className="flex items-start space-x-2">
-                    <FileText className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
-                    <div>
-                      <p className="font-extrabold text-slate-900 dark:text-zinc-100 text-xs">
-                        #88
-                      </p>
-                      <p className="text-xs text-red-600 dark:text-red-400 font-semibold leading-snug">
-                        Critical: Unable to access Salesforce
-                      </p>
-                    </div>
-                  </div>
-                </div>
+                  </button>
+                ))}
+                {searchResults.length === 0 && (
+                  <p className="p-2 text-xs text-slate-500 dark:text-zinc-400">
+                    Search for an error or symptom to retrieve matching memories.
+                  </p>
+                )}
               </div>
             </div>
           )}
         </div>
 
-        {/* Section 2: PAST INTERACTIONS WITH JANE DOE */}
+        {/* Section 2: Ticket conversation */}
         <div className="rounded-xl bg-white dark:bg-[#15151e] border border-slate-200 dark:border-[#242432] overflow-hidden shadow-2xs">
           <button
             onClick={() => setInteractionsOpen(!interactionsOpen)}
             className="w-full p-3 flex items-center justify-between text-left hover:bg-slate-50 dark:hover:bg-zinc-800/40 transition-colors"
           >
             <span className="text-xs font-extrabold uppercase tracking-wider text-slate-800 dark:text-zinc-200 truncate">
-              PAST INTERACTIONS WITH {clientName.toUpperCase()}
+              {clientName ? `TICKET HISTORY WITH ${clientName.toUpperCase()}` : "CURRENT TICKET HISTORY"}
             </span>
             <ChevronDown
               className={`w-4 h-4 text-slate-400 shrink-0 transition-transform duration-300 ease-out ${
@@ -225,18 +181,22 @@ export const MemoryInspector: React.FC<MemoryInspectorProps> = ({
 
           {interactionsOpen && (
             <div className="p-3 pt-0 space-y-2 border-t border-slate-100 dark:border-zinc-800/60">
-              <div className="flex items-start space-x-2.5 p-2 rounded-lg bg-slate-50/70 dark:bg-[#181824] border border-slate-200 dark:border-zinc-800 hover:border-yellow-500/40 hover:translate-x-0.5 transition-all duration-150">
-                <User className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
-                <p className="text-xs text-slate-800 dark:text-zinc-300 leading-snug">
-                  Summary Interaction with {clientName}... (Resolved Okta 2FA push storm on Oct 24).
+              {currentTicket?.messages.length ? currentTicket.messages.slice(-4).reverse().map((message) => (
+                <div key={message.id} className="flex items-start space-x-2.5 p-2 rounded-lg bg-slate-50/70 dark:bg-[#181824] border border-slate-200 dark:border-zinc-800">
+                  {message.role === "user" ? (
+                    <User className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
+                  ) : (
+                    <Users className="w-4 h-4 text-purple-500 shrink-0 mt-0.5" />
+                  )}
+                  <p className="text-xs text-slate-800 dark:text-zinc-300 leading-snug">
+                    <strong>{message.sender}:</strong> {message.content}
+                  </p>
+                </div>
+              )) : (
+                <p className="p-2 text-xs text-slate-500 dark:text-zinc-400">
+                  No conversation history is available for this ticket.
                 </p>
-              </div>
-              <div className="flex items-start space-x-2.5 p-2 rounded-lg bg-slate-50/70 dark:bg-[#181824] border border-slate-200 dark:border-zinc-800 hover:border-yellow-500/40 hover:translate-x-0.5 transition-all duration-150">
-                <Users className="w-4 h-4 text-purple-500 shrink-0 mt-0.5" />
-                <p className="text-xs text-slate-800 dark:text-zinc-300 leading-snug">
-                  Summary Agent cases with {clientName}... (3 incidents autonomously healed).
-                </p>
-              </div>
+              )}
             </div>
           )}
         </div>
@@ -248,7 +208,7 @@ export const MemoryInspector: React.FC<MemoryInspectorProps> = ({
             className="w-full p-3 flex items-center justify-between text-left hover:bg-slate-50 dark:hover:bg-zinc-800/40 transition-colors"
           >
             <span className="text-xs font-extrabold uppercase tracking-wider text-slate-800 dark:text-zinc-200">
-              RELEVANT ARTICLES
+              HINDSIGHT KNOWLEDGE
             </span>
             <ChevronDown
               className={`w-4 h-4 text-slate-400 shrink-0 transition-transform duration-300 ease-out ${
@@ -258,41 +218,18 @@ export const MemoryInspector: React.FC<MemoryInspectorProps> = ({
           </button>
 
           {articlesOpen && (
-            <div className="p-3 pt-0 space-y-2 border-t border-slate-100 dark:border-zinc-800/60">
-              <div
-                onClick={() =>
-                  setSelectedCaseModal({
-                    id: "KB-4091",
-                    title: "Resolving NTP Clock Skew on Enterprise Workstations",
-                    match: "Runbook Article",
-                    solution:
-                      "Execute in elevated terminal:\n1. w32tm /config /syncfromflags:manual /manualpeerlist:time.windows.com\n2. net stop w32time && net start w32time\n3. w32tm /resync /force",
-                  })
-                }
-                className="flex items-start space-x-2.5 p-2 rounded-lg bg-slate-50/70 dark:bg-[#181824] border border-slate-200 dark:border-zinc-800 cursor-pointer hover:border-yellow-400 hover:translate-x-1 transition-all duration-150"
+            <div className="p-3 pt-0 border-t border-slate-100 dark:border-zinc-800/60">
+              <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed">
+                Search above to retrieve relevant ticket resolutions from this memory bank.
+              </p>
+              <a
+                href="https://ui.hindsight.vectorize.io/banks/autofix_ai_tickets?view=documents"
+                target="_blank"
+                rel="noreferrer"
+                className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-yellow-700 dark:text-yellow-400 hover:underline"
               >
-                <BookOpen className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
-                <p className="text-xs text-slate-800 dark:text-zinc-300 leading-snug">
-                  Summary relevant information to and how to settle visual persist to... (KB-4091 NTP sync)
-                </p>
-              </div>
-              <div
-                onClick={() =>
-                  setSelectedCaseModal({
-                    id: "KB-1022",
-                    title: "Okta Identity Cloud SAML Token Assertion Protocol",
-                    match: "Runbook Article",
-                    solution:
-                      "1. Review SAML audience URI restriction\n2. Validate certificate fingerprint\n3. Flush expired token session in Okta Directory.",
-                  })
-                }
-                className="flex items-start space-x-2.5 p-2 rounded-lg bg-slate-50/70 dark:bg-[#181824] border border-slate-200 dark:border-zinc-800 cursor-pointer hover:border-yellow-400 hover:translate-x-1 transition-all duration-150"
-              >
-                <BookOpen className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
-                <p className="text-xs text-slate-800 dark:text-zinc-300 leading-snug">
-                  Summary relevant information all and sanitize case tonish... (KB-1022 Okta SAML)
-                </p>
-              </div>
+                Browse cloud documents <ExternalLink className="w-3 h-3" />
+              </a>
             </div>
           )}
         </div>
@@ -306,12 +243,12 @@ export const MemoryInspector: React.FC<MemoryInspectorProps> = ({
             <div>
               <div className="flex items-center space-x-1.5">
                 <span className="text-xs font-extrabold uppercase tracking-wider text-slate-800 dark:text-zinc-200">
-                  LEARNED PATTERNS
+                  MEMORY BANK STATUS
                 </span>
                 <Sparkles className="w-3.5 h-3.5 text-yellow-500" />
               </div>
               <p className="text-[11px] text-slate-400 dark:text-zinc-500 font-medium">
-                Agent performance insights
+                Live counts from the configured bank
               </p>
             </div>
             <ChevronDown
@@ -323,16 +260,22 @@ export const MemoryInspector: React.FC<MemoryInspectorProps> = ({
 
           {patternsOpen && (
             <div className="p-3 pt-0 space-y-2 border-t border-slate-100 dark:border-zinc-800/60">
-              <div className="p-2.5 rounded-lg bg-yellow-500/10 border border-yellow-500/25">
-                <div className="flex items-center space-x-1.5 text-yellow-800 dark:text-yellow-400 font-bold mb-1">
-                  <TrendingUp className="w-3.5 h-3.5" />
-                  <span>Summary learning telemetry</span>
-                </div>
-                <p className="text-xs text-slate-800 dark:text-zinc-300 leading-relaxed">
-                  Summary real-time memory object during agent performance insights. Autonomous precision is at{" "}
-                  <strong className="text-slate-950 dark:text-white">94.2%</strong> across {stats?.total_records || 16} indexed vectors.
+              {statsError ? (
+                <p role="alert" className="p-2.5 text-xs text-red-600 dark:text-red-400">
+                  {statsError}
                 </p>
-              </div>
+              ) : (
+                <div className="p-2.5 rounded-lg bg-yellow-500/10 border border-yellow-500/25">
+                  <div className="flex items-center space-x-1.5 text-yellow-800 dark:text-yellow-400 font-bold mb-1">
+                    <TrendingUp className="w-3.5 h-3.5" />
+                    <span>{stats?.is_cloud_connected ? "Hindsight Cloud connected" : "Local memory fallback"}</span>
+                  </div>
+                  <p className="text-xs text-slate-800 dark:text-zinc-300 leading-relaxed">
+                    {stats?.total_records ?? "—"} documents · {stats?.autonomous_resolutions ?? "—"} autonomous ·{" "}
+                    {stats?.human_verified_resolutions ?? "—"} human-verified.
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -343,11 +286,11 @@ export const MemoryInspector: React.FC<MemoryInspectorProps> = ({
         <div className="flex items-center space-x-2">
           <Database className="w-3.5 h-3.5 text-slate-400" />
           <span>
-            Bank: <strong className="text-slate-900 dark:text-zinc-200">{stats?.bank_id || "autofix_ai_tickets"}</strong>
+            Bank: <strong className="text-slate-900 dark:text-zinc-200">{stats?.bank_id || "—"}</strong>
           </span>
         </div>
-        <span className="text-emerald-600 dark:text-emerald-400 font-bold">
-          {stats?.total_records || 16} Vectors Active
+        <span className={stats?.is_cloud_connected ? "text-emerald-600 dark:text-emerald-400 font-bold" : "text-amber-600 dark:text-amber-400 font-bold"}>
+          {stats?.is_cloud_connected ? `${stats.total_records} docs` : "offline"}
         </span>
       </div>
 

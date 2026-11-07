@@ -126,4 +126,6 @@ The frontend is served on port 3000 and the backend API on port 8000.
 
 The root [`.env.example`](.env.example) documents the available settings, including `GROQ_API_KEY`, `HINDSIGHT_API_KEY`, `HINDSIGHT_BASE_URL`, `HINDSIGHT_BANK_ID`, `CONFIDENCE_THRESHOLD`, and `CORS_ORIGINS`. Never commit real API keys.
 
+When `HINDSIGHT_API_KEY` is configured, the backend retains verified resolutions in the selected Hindsight bank, uses cloud recall for memory searches, and reports cloud document counts in memory stats. Without a key, it falls back to local memory. The bundled ticket examples are seeded on backend startup; `python scripts/seed_data.py` can also be run manually from `autofix-ai` to seed them. The startup seed uses stable document IDs so it updates existing sample documents instead of creating duplicates. Browse the bank in the [Hindsight Cloud console](https://ui.hindsight.vectorize.io).
+
 Hindsight Cloud users can use promo code `MEMHACK99` for developer credits at [Vectorize](https://vectorize.io/).
