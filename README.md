@@ -23,6 +23,7 @@
 
 <p align="center">
   <a href="#-public-deployment-urls">Public URLs</a> •
+  <a href="#-lead-developer-profile--hari-krishnan">Author Profile</a> •
   <a href="#-meet-the-engineering-team">Engineering Team</a> •
   <a href="#-the-colosseum-of-tech-stacks">Tech Stack</a> •
   <a href="#-system-architecture--pipeline-flow">Architecture Pipeline</a> •
@@ -50,45 +51,89 @@ Autofix-AI is hosted and continuously deployed on [Render Cloud](https://render.
 
 ---
 
+## 👨‍💻 Lead Developer Profile — Hari Krishnan
+
+<table align="center" width="100%">
+  <tr>
+    <td align="center" width="30%" valign="top">
+      <a href="https://github.com/hkhearts">
+        <img src="Logo/hk.jpg" alt="Hari Krishnan" width="200" height="200" style="border-radius: 50%; object-fit: cover;" />
+      </a>
+      <br /><br />
+      <h2 style="margin: 0;">Hari Krishnan</h2>
+      <p style="margin: 4px 0 10px 0;"><strong>Lead Orchestration & Autonomous Agent Engineer</strong></p>
+      <p>
+        <a href="https://github.com/hkhearts"><img src="https://img.shields.io/badge/GitHub-@hkhearts-181717?style=for-the-badge&logo=github&logoColor=white" alt="GitHub"></a>
+        <br />
+        <a href="mailto:iamhkhearts@gmail.com"><img src="https://img.shields.io/badge/Email-iamhkhearts@gmail.com-EA4335?style=for-the-badge&logo=gmail&logoColor=white" alt="Email"></a>
+      </p>
+    </td>
+    <td width="70%" valign="top" style="padding-left: 20px;">
+      <h3>About Hari Krishnan</h3>
+      <p>
+        Hi! I'm <strong>Hari Krishnan</strong> (<a href="https://github.com/hkhearts">@hkhearts</a>), Lead Orchestration and Autonomous Agent Engineer on Autofix-AI. I engineered the autonomous decision-making engine, the Human-in-the-Loop (HITL) safety policy, and the persistent closed-loop learning infrastructure.
+      </p>
+      <h4>Core System Ownership & Architecture</h4>
+      <ul>
+        <li><strong>Deterministic Decision Gate ($C_{\text{threshold}} = 0.85$)</strong>: Designed the mathematical barrier that differentiates autonomous runbook execution from safety-escalated human review.</li>
+        <li><strong>Autonomous Execution Engine</strong>: Implemented safe tool calling with LLMs to automatically remediate incidents (DNS flushing, OAuth rotation, cache resets) within &lt;2 seconds.</li>
+        <li><strong>Human-in-the-Loop (HITL) Gatekeeper</strong>: Built the one-click approval and command override workflow inside the response composer card.</li>
+        <li><strong>Closed-Loop Memory Retention Hook</strong>: Developed the backend persistence layer that captures verified human resolutions and retains them permanently in Vectorize Hindsight.</li>
+        <li><strong>Mission Control UI & Live Memory Inspector</strong>: Built the responsive 3-column operations cockpit with real-time vector score meters and dark/light mode synchronization.</li>
+        <li><strong>Production Cloud Infrastructure</strong>: Configured the Render Blueprint (FastAPI backend + Next.js frontend), Docker containerization, and zero-downtime deployment pipelines.</li>
+      </ul>
+      <p>
+        📖 <strong>Technical Deep-Dive Article</strong>: <a href="#article-eliminating-support-escalations-through-human-in-the-loop-feedback-loops-and-persistent-state-memory"><em>"Eliminating Support Escalations Through Human-in-the-Loop Feedback Loops and Persistent State Memory"</em></a>
+      </p>
+    </td>
+  </tr>
+</table>
+
+---
+
 ## 👥 Meet the Engineering Team
 
 <table align="center" width="100%">
   <tr>
     <!-- HARINI CARD (FIRST) -->
-    <td align="center" width="50%" valign="top" style="padding: 24px; border: 1px solid #30363d; border-radius: 12px; background: #0d1117;">
+    <td align="center" width="50%" valign="top">
       <a href="#article-how-we-built-a-multimodal-vision-pipeline-that-indexes-error-screenshots-into-persistent-memory">
-        <img src="Logo/harini.jpg" alt="Harini" width="170" height="170" style="border-radius: 50%; object-fit: cover; border: 3px solid #818cf8; box-shadow: 0 0 20px rgba(129, 140, 248, 0.4);" />
+        <img src="Logo/harini.jpg" alt="Harini" width="160" height="160" style="border-radius: 50%; object-fit: cover;" />
       </a>
       <br /><br />
-      <h3 style="margin: 0; color: #f0f6fc;">Harini</h3>
-      <p style="margin: 4px 0 12px 0;">
+      <h3 style="margin: 0;">Harini</h3>
+      <p style="margin: 4px 0 10px 0;">
         <span style="background: #312e81; color: #c7d2fe; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600;">Lead Ingestion & Memory Architect</span>
       </p>
-      <p align="left" style="font-size: 13px; color: #8b949e; line-height: 1.6;">
+      <p align="left" style="font-size: 13px; line-height: 1.6;">
         Spearheaded the front-half perception pipeline: multimodal vision parsing with Groq, raw OCR extraction, canonical error signature synthesis, dynamic token normalization, and vector embedding indexing into Vectorize Hindsight.
       </p>
-      <div align="center" style="margin-top: 14px;">
-        <a href="#article-how-we-built-a-multimodal-vision-pipeline-that-indexes-error-screenshots-into-persistent-memory" style="color: #58a6ff; font-weight: 600; text-decoration: none;">
+      <div align="center" style="margin-top: 12px;">
+        <a href="#article-how-we-built-a-multimodal-vision-pipeline-that-indexes-error-screenshots-into-persistent-memory" style="font-weight: 600; text-decoration: none;">
           📖 Read Harini's Ingestion Article &rarr;
         </a>
       </div>
     </td>
 
     <!-- HARI KRISHNAN CARD (SECOND) -->
-    <td align="center" width="50%" valign="top" style="padding: 24px; border: 1px solid #30363d; border-radius: 12px; background: #0d1117;">
-      <a href="#article-eliminating-support-escalations-through-human-in-the-loop-feedback-loops-and-persistent-state-memory">
-        <img src="Logo/hk.jpg" alt="Hari Krishnan" width="170" height="170" style="border-radius: 50%; object-fit: cover; border: 3px solid #38bdf8; box-shadow: 0 0 20px rgba(56, 189, 248, 0.4);" />
+    <td align="center" width="50%" valign="top">
+      <a href="https://github.com/hkhearts">
+        <img src="Logo/hk.jpg" alt="Hari Krishnan" width="160" height="160" style="border-radius: 50%; object-fit: cover;" />
       </a>
       <br /><br />
-      <h3 style="margin: 0; color: #f0f6fc;">Hari Krishnan</h3>
-      <p style="margin: 4px 0 12px 0;">
+      <h3 style="margin: 0;">Hari Krishnan</h3>
+      <p style="margin: 4px 0 10px 0;">
         <span style="background: #0c4a6e; color: #bae6fd; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600;">Lead Orchestration & Autonomous Agent Engineer</span>
       </p>
-      <p align="left" style="font-size: 13px; color: #8b949e; line-height: 1.6;">
+      <p align="center">
+        <a href="https://github.com/hkhearts"><img src="https://img.shields.io/badge/GitHub-@hkhearts-181717?style=flat&logo=github&logoColor=white" alt="GitHub"></a>
+        <a href="mailto:iamhkhearts@gmail.com"><img src="https://img.shields.io/badge/Email-iamhkhearts-EA4335?style=flat&logo=gmail&logoColor=white" alt="Email"></a>
+      </p>
+      <p align="left" style="font-size: 13px; line-height: 1.6;">
         Engineered the back-half execution engine: confidence-gated decision routing ($C \ge 0.85$), safe autonomous remediation, Human-in-the-Loop (HITL) triage safety policies, closed-loop retention hooks, and the live Mission Control UI.
       </p>
-      <div align="center" style="margin-top: 14px;">
-        <a href="#article-eliminating-support-escalations-through-human-in-the-loop-feedback-loops-and-persistent-state-memory" style="color: #58a6ff; font-weight: 600; text-decoration: none;">
+      <div align="center" style="margin-top: 12px;">
+        <a href="#article-eliminating-support-escalations-through-human-in-the-loop-feedback-loops-and-persistent-state-memory" style="font-weight: 600; text-decoration: none;">
           📖 Read Hari Krishnan's Orchestration Article &rarr;
         </a>
       </div>
