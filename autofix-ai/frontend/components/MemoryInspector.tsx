@@ -271,7 +271,7 @@ export const MemoryInspector: React.FC<MemoryInspectorProps> = ({
                     <span>{stats?.is_cloud_connected ? "Hindsight Cloud connected" : "Local memory fallback"}</span>
                   </div>
                   <p className="text-xs text-slate-800 dark:text-zinc-300 leading-relaxed">
-                    {stats?.total_records ?? "—"} documents · {stats?.autonomous_resolutions ?? "—"} autonomous ·{" "}
+                    {stats?.total_records ?? "—"} memory units · {stats?.autonomous_resolutions ?? "—"} autonomous ·{" "}
                     {stats?.human_verified_resolutions ?? "—"} human-verified.
                   </p>
                 </div>
@@ -290,7 +290,7 @@ export const MemoryInspector: React.FC<MemoryInspectorProps> = ({
           </span>
         </div>
         <span className={stats?.is_cloud_connected ? "text-emerald-600 dark:text-emerald-400 font-bold" : "text-amber-600 dark:text-amber-400 font-bold"}>
-          {stats?.is_cloud_connected ? `${stats.total_records} docs` : "offline"}
+          {stats?.is_cloud_connected ? `${stats.total_records} memories` : "offline"}
         </span>
       </div>
 

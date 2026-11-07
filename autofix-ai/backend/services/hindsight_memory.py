@@ -321,30 +321,29 @@ def get_memory_stats() -> Dict[str, Any]:
 
     if _hindsight_client:
         try:
-            documents = _hindsight_client.documents.list_documents(
+            memories = _hindsight_client.list_memories(
                 bank_id=HINDSIGHT_BANK_ID,
-                limit=1,
+                limit=1000,
                 offset=0,
             )
-            total_records = documents.total
+            total_records = memories.total
             cloud_connected = True
-            if documents.items and documents.items[0].updated_at:
-                last_updated = documents.items[0].updated_at
-
-            autonomous_count = _hindsight_client.documents.list_documents(
-                bank_id=HINDSIGHT_BANK_ID,
-                tags=["autonomous"],
-                tags_match="any_strict",
-                limit=1,
-                offset=0,
-            ).total
-            hitl_count = _hindsight_client.documents.list_documents(
-                bank_id=HINDSIGHT_BANK_ID,
-                tags=["human_in_the_loop"],
-                tags_match="any_strict",
-                limit=1,
-                offset=0,
-            ).total
+            autonomous_documents = set()
+            hitl_documents = set()
+            for memory in memories.items:
+                document_id = memory.document_id
+                if not document_id:
+                    continue
+                tags = set(memory.tags or [])
+                if "autonomous" in tags:
+                    autonomous_documents.add(document_id)
+                if "human_in_the_loop" in tags:
+                    hitl_documents.add(document_id)
+                if memory.mentioned_at and memory.mentioned_at > last_updated:
+                    last_updated = memory.mentioned_at
+            if autonomous_documents or hitl_documents:
+                autonomous_count = len(autonomous_documents)
+                hitl_count = len(hitl_documents)
         except Exception as e:
             logger.warning(f"Hindsight Cloud stats request failed: {e}. Reporting local memory stats.")
             total_records = total_local

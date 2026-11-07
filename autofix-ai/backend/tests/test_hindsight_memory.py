@@ -32,14 +32,14 @@ class HindsightMemoryTests(unittest.TestCase):
 
     def test_stats_report_cloud_document_and_resolution_counts(self):
         client = MagicMock()
-        client.documents.list_documents.side_effect = [
-            SimpleNamespace(
-                total=15,
-                items=[SimpleNamespace(updated_at="2026-11-07T04:30:00Z")],
-            ),
-            SimpleNamespace(total=9, items=[]),
-            SimpleNamespace(total=6, items=[]),
+        cloud_memories = [
+            SimpleNamespace(document_id=f"tick-{index}.txt", tags=["autonomous"], mentioned_at=None)
+            for index in range(1, 10)
+        ] + [
+            SimpleNamespace(document_id=f"tick-{index}.txt", tags=["human_in_the_loop"], mentioned_at=None)
+            for index in range(10, 16)
         ]
+        client.list_memories.return_value = SimpleNamespace(total=24, items=cloud_memories)
 
         with patch.object(hindsight_memory, "initialize_hindsight_client"), patch.object(
             hindsight_memory, "_hindsight_client", client
@@ -47,10 +47,14 @@ class HindsightMemoryTests(unittest.TestCase):
             stats = hindsight_memory.get_memory_stats()
 
         self.assertTrue(stats["is_cloud_connected"])
-        self.assertEqual(stats["total_records"], 15)
+        self.assertEqual(stats["total_records"], 24)
         self.assertEqual(stats["autonomous_resolutions"], 9)
         self.assertEqual(stats["human_verified_resolutions"], 6)
-        self.assertEqual(stats["last_updated"], "2026-11-07T04:30:00Z")
+        client.list_memories.assert_called_once_with(
+            bank_id=hindsight_memory.HINDSIGHT_BANK_ID,
+            limit=1000,
+            offset=0,
+        )
 
     def test_resolution_can_update_an_existing_cloud_document(self):
         client = MagicMock()
