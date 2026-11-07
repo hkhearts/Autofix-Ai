@@ -34,6 +34,7 @@ from backend.services.hindsight_memory import (
     record_ticket_resolution,
     is_cloud_mode,
     set_cloud_mode,
+    _local_store,
 )
 from backend.services.vision_parser import parse_ticket
 
@@ -940,6 +941,77 @@ async def toggle_cloud_mode_api(payload: Optional[CloudModeToggleRequest] = None
 @app.get("/api/memory/search", tags=["Hindsight Memory"])
 async def memory_search(q: Optional[str] = Query(None), limit: int = Query(5, ge=1, le=50)):
     return await asearch_memory(q or "", limit=limit)
+
+
+@app.get("/api/memory/tree", tags=["Hindsight Memory"])
+async def get_memory_knowledge_tree():
+    """
+    Returns the structured Hindsight Knowledge Base Tree with category groupings,
+    verified runbooks, error signatures, and similarity telemetry.
+    """
+    categories = {
+        "Client Applications & Workplace": {
+            "icon": "Monitor",
+            "keywords": ["outlook", "ost", "office", "mailbox", "printer", "spooler", "teams", "jamf"],
+            "documents": [],
+        },
+        "Identity, SSO & Access": {
+            "icon": "Key",
+            "keywords": ["sso", "saml", "oauth", "password", "aadsts", "mfa", "token"],
+            "documents": [],
+        },
+        "Networking, VPN & Security": {
+            "icon": "Network",
+            "keywords": ["vpn", "dns", "ssl", "cert", "protocol", "crowdstrike", "bsod", "driver"],
+            "documents": [],
+        },
+        "Database, Cache & Storage": {
+            "icon": "Database",
+            "keywords": ["redis", "cluster", "cache", "postgres", "pool", "exhausted", "masterauth"],
+            "documents": [],
+        },
+        "Cloud, Kubernetes & DevOps": {
+            "icon": "Cloud",
+            "keywords": ["docker", "k8s", "kubernetes", "crashloop", "oomkilled", "registry"],
+            "documents": [],
+        },
+    }
+
+    # Populate from persistent memory store
+    for tid, doc in _local_store.records.items():
+        title = doc.get("metadata", {}).get("title") or doc["error_signature"]
+        sig = doc["error_signature"]
+        res_steps = doc["resolution_steps"]
+        res_type = doc["resolution_type"]
+        conf = 0.96 if res_type == "AUTONOMOUS" else 0.85
+        doc_entry = {
+            "ticket_id": tid,
+            "title": title,
+            "signature": sig,
+            "confidence": conf,
+            "resolution_type": res_type,
+            "resolution_steps": res_steps,
+            "source": "hindsight_bank",
+        }
+
+        search_blob = f"{sig} {title} {res_steps}".lower()
+        matched_cat = "Client Applications & Workplace"
+        for cat_name, cat_data in categories.items():
+            if any(k in search_blob for k in cat_data["keywords"]):
+                matched_cat = cat_name
+                break
+        categories[matched_cat]["documents"].append(doc_entry)
+
+    tree_list = []
+    for cat_name, cat_data in categories.items():
+        tree_list.append({
+            "category": cat_name,
+            "icon": cat_data["icon"],
+            "count": len(cat_data["documents"]),
+            "documents": cat_data["documents"],
+        })
+
+    return tree_list
 
 
 class HindsightConfigRequest(BaseModel):

@@ -134,6 +134,23 @@ export default function DashboardPage() {
     }
   };
 
+  const handleApplyResolution = async (runbookSteps: string) => {
+    if (!selectedTicket) return;
+    try {
+      const res = await axios.post(
+        `${apiUrl}/api/tickets/${selectedTicket.id}/feedback`,
+        {
+          resolution_steps: runbookSteps,
+          approved_by: user.name || "Lead Engineer",
+          notes: "Applied verified runbook from Hindsight Memory Bank.",
+        }
+      );
+      handleTicketUpdated(res.data);
+    } catch (e) {
+      console.error("Failed to apply Hindsight runbook to ticket", e);
+    }
+  };
+
   const handleUpdateUser = async (updated: UserSession) => {
     setUser(updated);
     if (typeof window !== "undefined") {
@@ -262,6 +279,7 @@ export default function DashboardPage() {
             <MemoryInspector
               currentTicket={selectedTicket}
               apiUrl={apiUrl}
+              onApplyResolution={handleApplyResolution}
             />
           </>
         )}

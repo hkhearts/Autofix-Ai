@@ -67,6 +67,23 @@ export interface MemorySearchResult {
   source?: 'hindsight_cloud' | 'local_vector_memory';
 }
 
+export interface MemoryTreeDocument {
+  ticket_id: string;
+  title: string;
+  signature: string;
+  confidence: number;
+  resolution_type: string;
+  resolution_steps: string;
+  source: string;
+}
+
+export interface MemoryTreeCategory {
+  category: string;
+  icon: string;
+  count: number;
+  documents: MemoryTreeDocument[];
+}
+
 export interface UserSession {
   email: string;
   name: string;
