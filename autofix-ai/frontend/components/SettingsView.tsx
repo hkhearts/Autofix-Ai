@@ -18,13 +18,14 @@ import {
 } from "lucide-react";
 import axios from "axios";
 import { UserSession } from "../types/ticket";
+import { getApiUrl } from "@/utils/api";
 
 interface SettingsViewProps {
   user: UserSession;
 }
 
 export const SettingsView: React.FC<SettingsViewProps> = ({ user }) => {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+  const apiUrl = getApiUrl();
 
   const [threshold, setThreshold] = useState(0.85);
   const [groqVisionModel, setGroqVisionModel] = useState("llama-3.2-11b-vision-preview");

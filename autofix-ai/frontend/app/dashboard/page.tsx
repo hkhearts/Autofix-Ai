@@ -18,9 +18,10 @@ import { MemoryInspector } from "../../components/MemoryInspector";
 import { PerformanceView } from "../../components/PerformanceView";
 import { SettingsView } from "../../components/SettingsView";
 import { NewTicketModal } from "../../components/NewTicketModal";
+import { getApiUrl } from "@/utils/api";
 
 export default function DashboardPage() {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+  const apiUrl = getApiUrl();
 
   const [activeTab, setActiveTab] = useState<"TICKETS" | "PERFORMANCE" | "SETTINGS">("TICKETS");
   const [searchQuery, setSearchQuery] = useState("");

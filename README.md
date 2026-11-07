@@ -14,8 +14,8 @@
 </p>
 
 <p align="center">
-  <a href="https://autofix-ai-frontend.onrender.com"><img alt="Live Web Console" src="https://img.shields.io/badge/Live_Console-Production_Render-46E3B7?style=for-the-badge&logo=render&logoColor=black"></a>
-  <a href="https://autofix-ai-backend.onrender.com/docs"><img alt="Swagger API Docs" src="https://img.shields.io/badge/Swagger_API-FastAPI_Live-009688?style=for-the-badge&logo=fastapi&logoColor=white"></a>
+  <a href="https://autofix-ai-frontend-3shv.onrender.com/"><img alt="Live Web Console" src="https://img.shields.io/badge/Live_Console-Production_Render-46E3B7?style=for-the-badge&logo=render&logoColor=black"></a>
+  <a href="https://autofix-ai-backend-51vk.onrender.com/docs"><img alt="Swagger API Docs" src="https://img.shields.io/badge/Swagger_API-FastAPI_Live-009688?style=for-the-badge&logo=fastapi&logoColor=white"></a>
   <a href="https://github.com/hkhearts/Autofix-Ai"><img alt="GitHub Repo" src="https://img.shields.io/badge/GitHub-Repository-181717?style=for-the-badge&logo=github&logoColor=white"></a>
   <a href="https://vectorize.io/"><img alt="Vectorize Hindsight" src="https://img.shields.io/badge/Memory-Vectorize_Hindsight-6366F1?style=for-the-badge&logoColor=white"></a>
   <a href="https://groq.com/"><img alt="Groq Vision OCR" src="https://img.shields.io/badge/Vision_OCR-Groq_Cloud-F55036?style=for-the-badge&logoColor=white"></a>
@@ -40,10 +40,10 @@ Autofix-AI is hosted and continuously deployed on [Render Cloud](https://render.
 
 | Service Component | Live Production URL | Description |
 | :--- | :--- | :--- |
-| **Frontend Web Console** | [https://autofix-ai-frontend.onrender.com](https://autofix-ai-frontend.onrender.com) | Responsive 3-column Mission Control UI with light/dark themes |
-| **Backend API Service** | [https://autofix-ai-backend.onrender.com](https://autofix-ai-backend.onrender.com) | High-concurrency FastAPI orchestration and OCR engine |
-| **Interactive API Docs** | [https://autofix-ai-backend.onrender.com/docs](https://autofix-ai-backend.onrender.com/docs) | Interactive Swagger UI for testing ingestion and feedback endpoints |
-| **System Health & Telemetry** | [https://autofix-ai-backend.onrender.com/health](https://autofix-ai-backend.onrender.com/health) | Live JSON health check, Hindsight connection status, and memory stats |
+| **Frontend Web Console** | [https://autofix-ai-frontend-3shv.onrender.com/](https://autofix-ai-frontend-3shv.onrender.com/) | Responsive 3-column Mission Control UI with light/dark themes |
+| **Backend API Service** | [https://autofix-ai-backend-51vk.onrender.com/](https://autofix-ai-backend-51vk.onrender.com/) | High-concurrency FastAPI orchestration and OCR engine |
+| **Interactive API Docs** | [https://autofix-ai-backend-51vk.onrender.com/docs](https://autofix-ai-backend-51vk.onrender.com/docs) | Interactive Swagger UI for testing ingestion and feedback endpoints |
+| **System Health & Telemetry** | [https://autofix-ai-backend-51vk.onrender.com/health](https://autofix-ai-backend-51vk.onrender.com/health) | Live JSON health check, Hindsight connection status, and memory stats |
 | **Hindsight Cloud Console** | [https://ui.hindsight.vectorize.io](https://ui.hindsight.vectorize.io) | Memory bank inspector and incident vector dashboard (`autofix_ai_tickets`) |
 
 > **Promo Code for Free Credits**: Use code **`MEMHACK99`** in the billing section of [ui.hindsight.vectorize.io](https://ui.hindsight.vectorize.io) to activate $50 in free developer credits on Hindsight Cloud.

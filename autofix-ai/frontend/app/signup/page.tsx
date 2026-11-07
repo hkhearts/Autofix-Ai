@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Building2, Lock, Mail, User, ArrowRight, Sun, Moon } from "lucide-react";
 import axios from "axios";
 import { useTheme } from "../../context/ThemeContext";
+import { getApiUrl } from "@/utils/api";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -22,7 +23,7 @@ export default function SignupPage() {
     setIsLoading(true);
     setErrorMsg("");
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    const apiUrl = getApiUrl();
 
     try {
       const res = await axios.post(`${apiUrl}/api/auth/signup`, {
