@@ -32,12 +32,14 @@ interface MemoryInspectorProps {
   currentTicket: Ticket | null;
   apiUrl: string;
   onApplyResolution?: (steps: string) => void;
+  onToggle?: () => void;
 }
 
 export const MemoryInspector: React.FC<MemoryInspectorProps> = ({
   currentTicket,
   apiUrl,
   onApplyResolution,
+  onToggle,
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [stats, setStats] = useState<MemoryStats | null>(null);
@@ -251,28 +253,38 @@ export const MemoryInspector: React.FC<MemoryInspectorProps> = ({
           </h2>
         </div>
 
-        {/* Toggle Cloud Mode Button */}
-        <button
-          onClick={handleToggleCloudMode}
-          disabled={isTogglingCloud}
-          className={`px-2.5 py-1 rounded-full text-[10.5px] font-bold flex items-center space-x-1.5 transition-all duration-150 border shadow-2xs hover:scale-102 active:scale-98 ${
-            isCloudMode
-              ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/25"
-              : "bg-amber-500/15 border-amber-500/40 text-amber-700 dark:text-amber-300 hover:bg-amber-500/25"
-          }`}
-          title={
-            isCloudMode
-              ? "Hindsight Cloud Active (Using Live Credits). Click to toggle Credit Saver."
-              : "Credit Saver Active (Local Vector Cache). Click to toggle Cloud Mode."
-          }
-        >
-          <Cloud
-            className={`w-3.5 h-3.5 ${
-              isCloudMode ? "text-emerald-500 animate-pulse" : "text-amber-500"
+        <div className="flex items-center gap-1.5">
+          {/* Toggle Cloud Mode Button */}
+          <button
+            onClick={handleToggleCloudMode}
+            disabled={isTogglingCloud}
+            className={`px-2.5 py-1 rounded-full text-[10.5px] font-bold flex items-center space-x-1.5 transition-all duration-150 border shadow-2xs hover:scale-102 active:scale-98 ${
+              isCloudMode
+                ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/25"
+                : "bg-amber-500/15 border-amber-500/40 text-amber-700 dark:text-amber-300 hover:bg-amber-500/25"
             }`}
-          />
-          <span>{isCloudMode ? "CLOUD (ONLINE)" : "LOCAL (SAVER)"}</span>
-        </button>
+            title={
+              isCloudMode
+                ? "Hindsight Cloud Active (Using Live Credits). Click to toggle Credit Saver."
+                : "Credit Saver Active (Local Vector Cache). Click to toggle Cloud Mode."
+            }
+          >
+            <Cloud
+              className={`w-3.5 h-3.5 ${
+                isCloudMode ? "text-emerald-500 animate-pulse" : "text-amber-500"
+              }`}
+            />
+            <span>{isCloudMode ? "CLOUD (ONLINE)" : "LOCAL (SAVER)"}</span>
+          </button>
+          <button
+            onClick={onToggle}
+            className="p-1 rounded hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors"
+            title="Collapse memory inspector"
+            aria-label="Collapse memory inspector"
+          >
+            <ChevronUp className="w-4 h-4 rotate-90" />
+          </button>
+        </div>
       </div>
 
       {/* Search Input */}

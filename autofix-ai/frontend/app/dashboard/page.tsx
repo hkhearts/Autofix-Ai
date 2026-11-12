@@ -8,6 +8,7 @@ import {
   CheckSquare,
   Settings,
   Sparkles,
+  Brain,
 } from "lucide-react";
 import { Ticket, UserSession } from "../../types/ticket";
 import { useTheme } from "../../context/ThemeContext";
@@ -29,6 +30,8 @@ export default function DashboardPage() {
   const [priorityFilter, setPriorityFilter] = useState("ALL");
   const { isDarkMode, toggleTheme } = useTheme();
   const [isNewTicketOpen, setIsNewTicketOpen] = useState(false);
+  const [ticketDockOpen, setTicketDockOpen] = useState(true);
+  const [memoryDockOpen, setMemoryDockOpen] = useState(true);
 
   // User session
   const [user, setUser] = useState<UserSession>({
@@ -106,6 +109,8 @@ export default function DashboardPage() {
       return updated;
     });
     setSelectedTicket(newTicket);
+    setTicketDockOpen(true);
+    setMemoryDockOpen(true);
     setActiveTab("TICKETS");
   };
 
@@ -197,7 +202,10 @@ export default function DashboardPage() {
         <div className="w-14 border-r border-slate-200 dark:border-[#22222e] bg-white dark:bg-[#0d0d12] flex flex-col items-center py-4 justify-between shrink-0 select-none z-20">
           <div className="flex flex-col items-center space-y-3">
             <button
-              onClick={() => setActiveTab("TICKETS")}
+              onClick={() => {
+                setActiveTab("TICKETS");
+                setTicketDockOpen((prev) => !prev);
+              }}
               className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 ease-out hover:scale-105 active:scale-95 ${
                 activeTab === "TICKETS"
                   ? "bg-yellow-400/20 text-yellow-600 dark:text-yellow-400 border border-yellow-500/30 shadow-xs"
@@ -240,6 +248,18 @@ export default function DashboardPage() {
           </div>
 
           <button
+            onClick={() => setMemoryDockOpen((prev) => !prev)}
+            className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 ease-out hover:scale-105 active:scale-95 ${
+              memoryDockOpen
+                ? "bg-yellow-400/20 text-yellow-600 dark:text-yellow-400 border border-yellow-500/30 shadow-xs"
+                : "text-slate-400 dark:text-zinc-500 hover:text-slate-800 dark:hover:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800/60"
+            }`}
+            title="Toggle Hindsight memory inspector"
+          >
+            <Brain className="w-4 h-4" />
+          </button>
+
+          <button
             onClick={() => setActiveTab("SETTINGS")}
             className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 ease-out hover:scale-105 active:scale-95 ${
               activeTab === "SETTINGS"
@@ -254,33 +274,50 @@ export default function DashboardPage() {
 
         {activeTab === "TICKETS" && (
           <>
-            {/* Column 1: Incoming Tickets Stream */}
-            <TicketStream
-              tickets={tickets}
-              selectedTicketId={selectedTicket?.id || ""}
-              onSelectTicket={(t) => setSelectedTicket(t)}
-              statusFilter={statusFilter}
-              setStatusFilter={setStatusFilter}
-              priorityFilter={priorityFilter}
-              setPriorityFilter={setPriorityFilter}
-              onDeleteTicket={handleTicketDeleted}
-            />
+            <div
+              className={`transition-all duration-300 ease-out overflow-hidden border-r border-slate-200 dark:border-[#22222e] ${
+                ticketDockOpen ? "w-[320px] sm:w-[340px] xl:w-[360px]" : "w-0 border-r-0"
+              }`}
+            >
+              {ticketDockOpen && (
+                <TicketStream
+                  tickets={tickets}
+                  selectedTicketId={selectedTicket?.id || ""}
+                  onSelectTicket={(t) => setSelectedTicket(t)}
+                  statusFilter={statusFilter}
+                  setStatusFilter={setStatusFilter}
+                  priorityFilter={priorityFilter}
+                  setPriorityFilter={setPriorityFilter}
+                  onDeleteTicket={handleTicketDeleted}
+                  onToggle={() => setTicketDockOpen(false)}
+                />
+              )}
+            </div>
 
-            {/* Column 2: Center Active Ticket Console */}
-            <ActiveTicketView
-              ticket={selectedTicket}
-              apiUrl={apiUrl}
-              user={user}
-              onTicketUpdated={handleTicketUpdated}
-              onDeleteTicket={handleTicketDeleted}
-            />
+            <div className="flex-1 min-w-0">
+              <ActiveTicketView
+                ticket={selectedTicket}
+                apiUrl={apiUrl}
+                user={user}
+                onTicketUpdated={handleTicketUpdated}
+                onDeleteTicket={handleTicketDeleted}
+              />
+            </div>
 
-            {/* Column 3: Hindsight Memory Inspector */}
-            <MemoryInspector
-              currentTicket={selectedTicket}
-              apiUrl={apiUrl}
-              onApplyResolution={handleApplyResolution}
-            />
+            <div
+              className={`transition-all duration-300 ease-out overflow-hidden shrink-0 ${
+                memoryDockOpen ? "w-80 xl:w-92" : "w-0"
+              }`}
+            >
+              {memoryDockOpen && (
+                <MemoryInspector
+                  currentTicket={selectedTicket}
+                  apiUrl={apiUrl}
+                  onApplyResolution={handleApplyResolution}
+                  onToggle={() => setMemoryDockOpen(false)}
+                />
+              )}
+            </div>
           </>
         )}
 

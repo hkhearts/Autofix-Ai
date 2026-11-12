@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { X, Sparkles, AlertTriangle, Send } from "lucide-react";
 import { FileUpload } from "./FileUpload";
 import axios from "axios";
@@ -19,14 +19,43 @@ export const NewTicketModal: React.FC<NewTicketModalProps> = ({
   apiUrl,
   onTicketCreated,
 }) => {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [clientName, setClientName] = useState("Jane Doe");
-  const [priority, setPriority] = useState<"Critical" | "High" | "Medium" | "Low">("Critical");
-  const [category, setCategory] = useState<"L1" | "L2">("L1");
+  const defaultForm = {
+    title: "",
+    description: "",
+    clientName: "Jane Doe",
+    priority: "Critical" as "Critical" | "High" | "Medium" | "Low",
+    category: "L1" as "L1" | "L2",
+  };
+
+  const [title, setTitle] = useState(defaultForm.title);
+  const [description, setDescription] = useState(defaultForm.description);
+  const [clientName, setClientName] = useState(defaultForm.clientName);
+  const [priority, setPriority] = useState<"Critical" | "High" | "Medium" | "Low">(defaultForm.priority);
+  const [category, setCategory] = useState<"L1" | "L2">(defaultForm.category);
   const [screenshot, setScreenshot] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+
+  const resetForm = () => {
+    setTitle(defaultForm.title);
+    setDescription(defaultForm.description);
+    setClientName(defaultForm.clientName);
+    setPriority(defaultForm.priority);
+    setCategory(defaultForm.category);
+    setScreenshot(null);
+    setErrorMsg("");
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      resetForm();
+    }
+  }, [isOpen]);
+
+  const handleClose = () => {
+    resetForm();
+    onClose();
+  };
 
   if (!isOpen) return null;
 
@@ -57,6 +86,7 @@ export const NewTicketModal: React.FC<NewTicketModalProps> = ({
       });
 
       onTicketCreated(res.data);
+      resetForm();
       onClose();
     } catch (err: any) {
       setErrorMsg(err.response?.data?.detail || "Failed to submit ticket. Please check backend connection.");
@@ -79,7 +109,7 @@ export const NewTicketModal: React.FC<NewTicketModalProps> = ({
             </h3>
           </div>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
           >
             <X className="w-4 h-4" />
@@ -178,7 +208,7 @@ export const NewTicketModal: React.FC<NewTicketModalProps> = ({
           <div className="pt-2 flex items-center justify-end space-x-3">
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               className="px-4 py-2.5 rounded-lg text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 font-semibold text-xs uppercase tracking-wider"
             >
               Cancel

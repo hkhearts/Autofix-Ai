@@ -26,6 +26,7 @@ interface TicketStreamProps {
   priorityFilter: string;
   setPriorityFilter: (priority: string) => void;
   onDeleteTicket?: (ticketId: string) => void;
+  onToggle?: () => void;
 }
 
 export const TicketStream: React.FC<TicketStreamProps> = ({
@@ -37,6 +38,7 @@ export const TicketStream: React.FC<TicketStreamProps> = ({
   priorityFilter,
   setPriorityFilter,
   onDeleteTicket,
+  onToggle,
 }) => {
   const [showFilterMenu, setShowFilterMenu] = useState(false);
   const [showSortMenu, setShowSortMenu] = useState(false);
@@ -138,17 +140,27 @@ export const TicketStream: React.FC<TicketStreamProps> = ({
             {filtered.length}
           </span>
         </div>
-        <button
-          onClick={() => {
-            setStatusFilter("ALL");
-            setPriorityFilter("ALL");
-            setStreamSearch("");
-          }}
-          className="text-slate-400 hover:text-slate-700 dark:hover:text-white p-1 rounded hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
-          title="Reset Filters"
-        >
-          <MoreVertical className="w-4 h-4" />
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => {
+              setStatusFilter("ALL");
+              setPriorityFilter("ALL");
+              setStreamSearch("");
+            }}
+            className="text-slate-400 hover:text-slate-700 dark:hover:text-white p-1 rounded hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
+            title="Reset Filters"
+          >
+            <MoreVertical className="w-4 h-4" />
+          </button>
+          <button
+            onClick={onToggle}
+            className="text-slate-400 hover:text-slate-700 dark:hover:text-white p-1 rounded hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
+            title="Collapse ticket queue"
+            aria-label="Collapse ticket queue"
+          >
+            <ChevronDown className="w-4 h-4 rotate-90" />
+          </button>
+        </div>
       </div>
 
       {/* Filter / Sort & Search Row */}
