@@ -19,3 +19,6 @@ dist/
 Thumbs.db
 .vscode/
 .idea/
+
+# Media
+*.mp4
