@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import Link from "next/link";
 import {
   Columns3,
   FileText,
@@ -9,6 +10,7 @@ import {
   Settings,
   Sparkles,
   Brain,
+  Network,
 } from "lucide-react";
 import { Ticket, UserSession } from "../../types/ticket";
 import { useTheme } from "../../context/ThemeContext";
@@ -245,6 +247,14 @@ export default function DashboardPage() {
             >
               <CheckSquare className="w-4 h-4" />
             </button>
+
+            <Link
+              href="/dashboard/hind-visuals"
+              className="w-9 h-9 rounded-xl flex items-center justify-center text-yellow-600 dark:text-yellow-400 hover:bg-yellow-400/20 border border-yellow-500/30 transition-all duration-200 ease-out hover:scale-105 active:scale-95 shadow-xs"
+              title="Hind Visuals (3 Windows: Knowledge Graph, Tree & Cloud Dashboard)"
+            >
+              <Network className="w-4 h-4" />
+            </Link>
           </div>
 
           <button

@@ -35,6 +35,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ user }) => {
   const [hindsightApiKey, setHindsightApiKey] = useState("");
   const [showKey, setShowKey] = useState(false);
   const [testingConnection, setTestingConnection] = useState(false);
+  const [cloudModeEnabled, setCloudModeEnabled] = useState(true);
+  const [cloudStatus, setCloudStatus] = useState<"Online" | "Offline">("Offline");
+  const [bankStatus, setBankStatus] = useState<"Online" | "Offline">("Online");
+  const [bankNodesCount, setBankNodesCount] = useState(0);
+  const [isTogglingCloud, setIsTogglingCloud] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<{
     tested: boolean;
     success: boolean;
@@ -54,10 +59,34 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ user }) => {
             message: "Connected to Hindsight Cloud instance",
           });
         }
+        if (res.data.cloud_mode_enabled !== undefined) {
+          setCloudModeEnabled(res.data.cloud_mode_enabled);
+        }
+        setCloudStatus(res.data.cloud_status || (res.data.is_cloud_connected ? "Online" : "Offline"));
+        setBankStatus(res.data.bank_status || "Online");
+        setBankNodesCount(res.data.bank_nodes_count || 0);
       } catch (e) {}
     };
     checkStats();
   }, [apiUrl]);
+
+  const handleToggleCloudMode = async () => {
+    setIsTogglingCloud(true);
+    try {
+      const res = await axios.post(`${apiUrl}/api/memory/toggle-cloud-mode`, {
+        enabled: !cloudModeEnabled,
+      });
+      setCloudModeEnabled(res.data.cloud_mode_enabled);
+      setCloudStatus(res.data.stats?.cloud_status || (res.data.cloud_mode_enabled && res.data.is_cloud_connected ? "Online" : "Offline"));
+      if (res.data.stats?.bank_status) {
+        setBankStatus(res.data.stats.bank_status);
+      }
+    } catch (e) {
+      console.error("Failed to toggle cloud mode", e);
+    } finally {
+      setIsTogglingCloud(false);
+    }
+  };
 
   const handleTestCloudConnection = async () => {
     if (!hindsightApiKey.trim()) {
@@ -254,6 +283,61 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ user }) => {
               >
                 {testingConnection ? "Connecting..." : "Test Cloud Connection"}
               </button>
+            </div>
+
+            {/* Cloud Memory Toggle & Dual Online/Offline Live Badges */}
+            <div className="p-4 rounded-xl bg-slate-100/80 dark:bg-[#1a1a26] border border-slate-200 dark:border-zinc-800 space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <div className="flex items-center space-x-2">
+                    <Cloud className="w-4 h-4 text-yellow-500" />
+                    <span className="text-xs font-extrabold uppercase tracking-wider text-slate-800 dark:text-zinc-200">
+                      Cloud Memory Mode
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
+                    Toggle Cloud Memory ON/OFF to test the offline SQLite Knowledge Bank fallback system without internet.
+                  </p>
+                </div>
+
+                <div className="flex items-center space-x-3 shrink-0">
+                  {/* Status Badges */}
+                  <div className="flex items-center space-x-2 text-xs font-bold">
+                    <span
+                      className={`px-2.5 py-1 rounded-md border flex items-center space-x-1.5 ${
+                        cloudStatus === "Online"
+                          ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30"
+                          : "bg-slate-200/60 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 border-slate-300 dark:border-zinc-700"
+                      }`}
+                    >
+                      <span className={`w-2 h-2 rounded-full ${cloudStatus === "Online" ? "bg-emerald-500 animate-pulse" : "bg-slate-400"}`} />
+                      <span>Cloud: {cloudStatus}</span>
+                    </span>
+
+                    <span className="px-2.5 py-1 rounded-md border bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/30 flex items-center space-x-1.5">
+                      <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+                      <span>Bank: {bankStatus} ({bankNodesCount} nodes)</span>
+                    </span>
+                  </div>
+
+                  {/* Toggle Button */}
+                  <button
+                    type="button"
+                    onClick={handleToggleCloudMode}
+                    disabled={isTogglingCloud}
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                      cloudModeEnabled ? "bg-yellow-400" : "bg-slate-300 dark:bg-zinc-700"
+                    }`}
+                    title={cloudModeEnabled ? "Turn Cloud Memory OFF (use fallback)" : "Turn Cloud Memory ON"}
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                        cloudModeEnabled ? "translate-x-5" : "translate-x-0"
+                      }`}
+                    />
+                  </button>
+                </div>
+              </div>
             </div>
 
             {/* Fallback & Credit Saver Mode Card */}

@@ -1,0 +1,42 @@
+version: "3.8"
+
+services:
+  backend:
+    build:
+      context: ./autofix-ai
+      target: backend
+    container_name: autofix-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - GROQ_API_KEY=${GROQ_API_KEY:-}
+      - GROQ_VISION_MODEL=${GROQ_VISION_MODEL:-llama-3.2-11b-vision-preview}
+      - GROQ_TEXT_MODEL=${GROQ_TEXT_MODEL:-llama-3.3-70b-versatile}
+      - HINDSIGHT_API_KEY=${HINDSIGHT_API_KEY:-}
+      - HINDSIGHT_BASE_URL=${HINDSIGHT_BASE_URL:-https://api.hindsight.vectorize.io}
+      - HINDSIGHT_BANK_ID=${HINDSIGHT_BANK_ID:-autofix_ai_tickets}
+      - CONFIDENCE_THRESHOLD=0.85
+      - CORS_ORIGINS=*
+    volumes:
+      - ./autofix-ai/data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  frontend:
+    build:
+      context: ./autofix-ai
+      target: frontend
+    container_name: autofix-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    depends_on:
+      - backend

@@ -204,6 +204,7 @@ def build_error_signature(title: str, description: str, ocr_text: str = "") -> s
     patterns = [
         r"ORA-\d+", r"AADSTS\d+", r"0X[0-9A-F]+", r"HTTP_\d+", r"CODE_\d+",
         r"OOMKILLED", r"CRASHLOOPBACKOFF", r"IMAGEPULLBACKOFF", r"ERR_[A-Z_]+",
+        r"\bVPN\b", r"\bSSO\b", r"\bDNS\b", r"\bSAML\b", r"\bMFA\b", r"\bK8S\b", r"\bNTP\b", r"\bTLS\b",
         r"SALESFORCE", r"OKTA", r"CISCO", r"ANYCONNECT", r"OUTLOOK", r"AZURE_AD",
         r"POSTGRES", r"ORACLE", r"KUBERNETES", r"DOCKER", r"REDIS", r"SSL", r"PRINTER"
     ]

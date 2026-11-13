@@ -56,13 +56,19 @@ export const ActiveTicketView: React.FC<ActiveTicketViewProps> = ({
   const [suggestionsOpen, setSuggestionsOpen] = useState(true);
   const [showStatusMenu, setShowStatusMenu] = useState(false);
   const [copiedSolution, setCopiedSolution] = useState(false);
+  const [selectedStatusOption, setSelectedStatusOption] = useState<string>(
+    ticket?.status || "PENDING_HUMAN_REVIEW"
+  );
 
-  // When ticket changes, pre-fill resolution text if pending
+  // When ticket changes, pre-fill resolution text if pending and sync status option
   useEffect(() => {
-    if (ticket && ticket.status === "PENDING_HUMAN_REVIEW" && ticket.resolution_steps && !replyText) {
-      setReplyText(ticket.resolution_steps);
+    if (ticket) {
+      setSelectedStatusOption(ticket.status);
+      if (ticket.status === "PENDING_HUMAN_REVIEW" && ticket.resolution_steps && !replyText) {
+        setReplyText(ticket.resolution_steps);
+      }
     }
-  }, [ticket?.id]);
+  }, [ticket?.id, ticket?.status]);
 
   if (!ticket) {
     return (
@@ -153,6 +159,7 @@ export const ActiveTicketView: React.FC<ActiveTicketViewProps> = ({
         notes: "Verified and approved by Lead Engineer via Console",
       });
       onTicketUpdated(res.data);
+      setSelectedStatusOption("RESOLVED_HUMAN_VERIFIED");
       setReplyText("");
     } catch (e) {
       console.error("Failed to approve ticket", e);
@@ -161,9 +168,10 @@ export const ActiveTicketView: React.FC<ActiveTicketViewProps> = ({
     }
   };
 
-  // Change Ticket Status
+  // Change Ticket Status directly
   const handleStatusChange = async (newStatus: string) => {
     setShowStatusMenu(false);
+    setSelectedStatusOption(newStatus);
     setIsSubmitting(true);
     try {
       const res = await axios.patch(`${apiUrl}/api/tickets/${ticket.id}/status`, {
@@ -175,6 +183,22 @@ export const ActiveTicketView: React.FC<ActiveTicketViewProps> = ({
       console.error("Failed to update status", e);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  // User selects an option from the status dropdown menu
+  const handleSelectStatusDropdown = (statusKey: string) => {
+    setSelectedStatusOption(statusKey);
+    setShowStatusMenu(false);
+    if (statusKey === "RESOLVED_HUMAN_VERIFIED") {
+      // Keep "APPROVE & SOLVE (HUMAN IN LOOP)" button visible and prominent!
+      // If replyText is empty, prefill with recommended solution
+      if (!replyText.trim() && guidance?.recommended_solution) {
+        setReplyText(guidance.recommended_solution);
+      }
+    } else {
+      // For other direct status changes, update the ticket status on server
+      handleStatusChange(statusKey);
     }
   };
 
@@ -583,7 +607,13 @@ export const ActiveTicketView: React.FC<ActiveTicketViewProps> = ({
                 onClick={() => setShowStatusMenu(!showStatusMenu)}
                 className="px-4 py-2.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-[#1f1f28] dark:hover:bg-[#282834] text-slate-800 dark:text-zinc-200 border border-slate-300 dark:border-[#303040] hover:border-slate-400 dark:hover:border-zinc-500 font-semibold text-xs tracking-wider transition-all duration-200 ease-out hover:scale-102 active:scale-98 flex items-center space-x-1.5 shadow-2xs"
               >
-                <span>UPDATE STATUS ({ticket.status.replace(/_/g, " ")})</span>
+                <span>
+                  UPDATE STATUS (
+                  {selectedStatusOption === "RESOLVED_HUMAN_VERIFIED"
+                    ? "HUMAN VERIFIED"
+                    : selectedStatusOption.replace(/_/g, " ")}
+                  )
+                </span>
                 <ChevronDown
                   className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${
                     showStatusMenu ? "rotate-180" : ""
@@ -592,37 +622,56 @@ export const ActiveTicketView: React.FC<ActiveTicketViewProps> = ({
               </button>
 
               {showStatusMenu && (
-                <div className="absolute right-0 bottom-full mb-2 w-60 rounded-xl bg-white dark:bg-[#181824] border border-slate-200 dark:border-[#2e2e3e] shadow-2xl p-2 z-50 text-xs animate-in fade-in zoom-in-95 duration-150">
+                <div className="absolute right-0 bottom-full mb-2 w-64 rounded-xl bg-white dark:bg-[#181824] border border-slate-200 dark:border-[#2e2e3e] shadow-2xl p-2 z-50 text-xs animate-in fade-in zoom-in-95 duration-150">
                   <p className="text-[11px] uppercase font-bold text-slate-400 dark:text-zinc-500 mb-1.5 px-2">
-                    Set Ticket Status
+                    Set Target Verification / Status
                   </p>
                   {[
                     { key: "PENDING_HUMAN_REVIEW", label: "Pending Human Review" },
                     { key: "IN_PROGRESS", label: "In Progress" },
+                    { key: "RESOLVED_HUMAN_VERIFIED", label: "Human Verified (Approve in Loop)" },
                     { key: "RESOLVED_AUTONOMOUSLY", label: "Resolved Autonomously" },
-                    { key: "RESOLVED_HUMAN_VERIFIED", label: "Resolved (Human Verified)" },
                   ].map((s) => (
                     <button
                       key={s.key}
-                      onClick={() => handleStatusChange(s.key)}
-                      className="w-full text-left px-2.5 py-1.5 rounded-md text-xs mb-0.5 font-medium hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-800 dark:text-zinc-200 transition-colors duration-150"
+                      onClick={() => handleSelectStatusDropdown(s.key)}
+                      className={`w-full text-left px-2.5 py-2 rounded-md text-xs mb-1 font-medium transition-colors duration-150 flex items-center justify-between ${
+                        selectedStatusOption === s.key || ticket.status === s.key
+                          ? "bg-yellow-400/20 text-yellow-700 dark:text-yellow-300 font-bold"
+                          : "hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-800 dark:text-zinc-200"
+                      }`}
                     >
-                      {s.label}
+                      <span>{s.label}</span>
+                      {(selectedStatusOption === s.key || ticket.status === s.key) && (
+                        <Check className="w-3.5 h-3.5" />
+                      )}
                     </button>
                   ))}
                 </div>
               )}
             </div>
 
-            {/* APPROVE & SOLVE Button (When Pending Review) */}
-            {isPendingReview && (
+            {/* APPROVE & SOLVE Button (Human in the Loop) */}
+            {(isPendingReview ||
+              selectedStatusOption === "RESOLVED_HUMAN_VERIFIED" ||
+              ticket.status === "RESOLVED_HUMAN_VERIFIED" ||
+              ticket.status === "IN_PROGRESS") && (
               <button
                 onClick={handleApproveAndSolve}
                 disabled={isSubmitting}
-                className="px-6 py-2.5 rounded-lg bg-yellow-400 hover:bg-yellow-300 text-slate-950 font-bold text-xs uppercase tracking-wider transition-all duration-200 ease-out hover:scale-105 active:scale-95 shadow-md hover:shadow-lg shadow-yellow-500/25 flex items-center space-x-2"
+                className={`px-6 py-2.5 rounded-lg font-bold text-xs uppercase tracking-wider transition-all duration-200 ease-out hover:scale-105 active:scale-95 shadow-md hover:shadow-lg flex items-center space-x-2 ${
+                  ticket.status === "RESOLVED_HUMAN_VERIFIED"
+                    ? "bg-emerald-500 hover:bg-emerald-400 text-white shadow-emerald-500/25"
+                    : "bg-yellow-400 hover:bg-yellow-300 text-slate-950 shadow-yellow-500/25"
+                }`}
+                title="Execute matching, update confidence percentage, run fix trace and save memory"
               >
                 <CheckCircle className="w-4 h-4 stroke-[2.5]" />
-                <span>APPROVE & SOLVE (HUMAN IN LOOP)</span>
+                <span>
+                  {ticket.status === "RESOLVED_HUMAN_VERIFIED"
+                    ? "HUMAN VERIFIED (CLICK TO RE-APPROVE & MATCH)"
+                    : "APPROVE & SOLVE (HUMAN IN LOOP)"}
+                </span>
               </button>
             )}
           </div>

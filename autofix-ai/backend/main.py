@@ -36,6 +36,15 @@ from backend.services.hindsight_memory import (
     set_cloud_mode,
     _local_store,
 )
+from backend.services.knowledge_bank import (
+    init_knowledge_bank_db,
+    record_ticket_in_bank,
+    search_bank_matches,
+    get_cached_graph,
+    get_cached_tree,
+    get_bank_analytics,
+    generate_proportional_response,
+)
 from backend.services.vision_parser import parse_ticket
 
 load_dotenv()
@@ -221,159 +230,53 @@ def generate_guidance_insights(
     recall: Dict[str, Any],
 ) -> DiagnosticInsights:
     """
-    Synthesizes clear, readable, production-grade pattern-matched guidance and resolution instructions.
+    Synthesizes clear, readable, production-grade pattern-matched guidance
+    proportionally scaled by vector match percentage:
+    - < 10%: Initial exploratory triage / novel signature protocol.
+    - 30% - 49%: Tells something relevant with the vector matched tickets, extracting shared traits & preliminary steps.
+    - 50% - 69%: Substantial correlation with tailored remediation steps.
+    - 70% - 84%: High-fidelity tailored runbook resolution requiring 1-click human verification.
+    - >= 85%: Full autonomous resolution.
     """
-    confidence_pct = int(recall.get("confidence", 0.0) * 100)
+    confidence = float(recall.get("confidence", 0.05))
     matched_id = recall.get("matched_ticket_id")
-    steps = recall.get("resolution_steps", "")
 
-    sig_lower = (
-        f"{error_signature.lower()} {title.lower()} {description.lower()} {ocr_text.lower()}"
+    # Retrieve candidate details from recall or memory store
+    matched_title = recall.get("title", "")
+    matched_steps = recall.get("resolution_steps", "")
+    matched_sig = recall.get("error_signature", error_signature)
+
+    if not matched_title and matched_id and matched_id in TICKET_STORE:
+        matched_title = TICKET_STORE[matched_id].title
+        if not matched_steps:
+            matched_steps = TICKET_STORE[matched_id].resolution_steps
+        matched_sig = TICKET_STORE[matched_id].error_signature
+
+    best_match = {
+        "ticket_id": matched_id or "HISTORICAL-REF",
+        "title": matched_title or "Correlated Enterprise Runbook",
+        "resolution_steps": matched_steps,
+        "error_signature": matched_sig,
+    }
+
+    # Generate proportional guidance
+    prop_data = generate_proportional_response(
+        title=title,
+        description=description,
+        error_signature=error_signature,
+        ocr_text=ocr_text,
+        best_match=best_match,
+        confidence=confidence,
     )
 
-    if "salesforce" in sig_lower or "okta" in sig_lower or "saml" in sig_lower or "sso" in sig_lower or "clock skew" in sig_lower:
-        matched_title = "Salesforce & Okta SAML 401 Clock Skew / Stale Assertion"
-        root_cause = "SAML response validation failed due to client-server NTP time drift or stale multi-factor authentication tokens in the identity provider cache."
-        solution = (
-            steps or
-            "1. Resync local workstation NTP clock: `w32tm /resync /force`\n"
-            "2. Invalidate expired Okta SAML assertion tokens in identity lifecycle pool\n"
-            "3. Clear Chrome/Edge browser SAML authentication cookies for *.salesforce.com\n"
-            "4. Re-issue clean SAML challenge; verify 200 OK handshake."
-        )
-        prevention = "Ensure domain controller NTP synchronization policy is enforced across all client endpoints."
-
-    elif "vpn" in sig_lower or "cisco" in sig_lower or "anyconnect" in sig_lower or "tunnel" in sig_lower:
-        matched_title = "Cisco AnyConnect Tunnel Gateway Timeout & Routing Drop"
-        root_cause = "Local Windows Socket stack corruption or TAP-Windows network adapter binding priority drop preventing DHCP pool gateway address assignment."
-        solution = (
-            steps or
-            "1. Reset Windows Socket stack and flush DNS cache: `netsh winsock reset && ipconfig /flushdns`\n"
-            "2. Restart AnyConnect VPN service: `net stop csc_vpnagent && net start csc_vpnagent`\n"
-            "3. Re-order network adapter bindings to prioritize TAP adapter\n"
-            "4. Verify gateway tunnel establishes with assigned corporate IP."
-        )
-        prevention = "Update Cisco AnyConnect client to v4.10+ to prevent split-tunnel routing conflicts."
-
-    elif "kubernetes" in sig_lower or "oomkilled" in sig_lower or "crashloop" in sig_lower or "k8s" in sig_lower or "exit 137" in sig_lower:
-        matched_title = "Kubernetes Pod CrashLoopBackOff via Memory OOMKilled (Exit 137)"
-        root_cause = "Containerized JVM or worker process exceeded hard cgroup memory limits, triggering Linux kernel Out-Of-Memory killer."
-        solution = (
-            steps or
-            "1. Analyze container heap dump to isolate cache memory leak\n"
-            "2. Patch deployment limits: `kubectl set resources deployment -c app --limits=memory=2Gi --requests=memory=1Gi`\n"
-            "3. Enable container memory options: `-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0`\n"
-            "4. Trigger rolling restart and verify pod status is Running (0 restarts)."
-        )
-        prevention = "Set up Prometheus memory alerts at 85% consumption threshold to avoid unexpected OOM termination."
-
-    elif "database" in sig_lower or "ora-12154" in sig_lower or "postgres" in sig_lower or "tns" in sig_lower or "hikari" in sig_lower:
-        matched_title = "Database Connection Pool Exhaustion / TNS Identifier Failure"
-        root_cause = "Stale transactions left idle in transaction state or missing TNS descriptor in database config map."
-        solution = (
-            steps or
-            "1. Terminate orphaned idle transactions: `SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE state = 'idle in transaction'`\n"
-            "2. Verify TNS net service descriptor configuration in tnsnames.ora\n"
-            "3. Restart HikariCP / PgBouncer connection pooler with max pool size 50\n"
-            "4. Verify application connectivity latency < 2ms."
-        )
-        prevention = "Enforce `idle_in_transaction_session_timeout` of 60 seconds on all staging and production databases."
-
-    elif "printer" in sig_lower or "spooler" in sig_lower or "paper jam" in sig_lower or "print" in sig_lower:
-        matched_title = "FollowMe Network Printer Dynamic WSD Port Disconnect"
-        root_cause = "Network DHCP lease renewal reassigned the physical printer IP address while workstations were bound to dynamic WSD ports."
-        solution = (
-            steps or
-            "1. Bind printer queue to a static DNS hostname Standard TCP/IP Port\n"
-            "2. Restart Print Spooler service: `net stop spooler && net start spooler`\n"
-            "3. Purge stuck spool files in `C:\\Windows\\System32\\spool\\PRINTERS`\n"
-            "4. Send automated test page to verify spooling complete."
-        )
-        prevention = "Reserve static DHCP bindings for all enterprise floor printers."
-
-    elif "ssl" in sig_lower or "cert" in sig_lower or "tls" in sig_lower or "err_ssl" in sig_lower:
-        matched_title = "Internal TLS/SSL Certificate Expiration (ERR_SSL_PROTOCOL_ERROR)"
-        root_cause = "Ingress wildcard TLS certificate passed its 365-day validity date without automated ACME renewal."
-        solution = (
-            steps or
-            "1. Trigger Cert-Manager renewal: `kubectl renew certificate internal-corp-wildcard -n ingress`\n"
-            "2. Verify renewed x509 certificate validity window\n"
-            "3. Perform zero-downtime NGINX Ingress reload to mount updated secret\n"
-            "4. Verified TLS 1.3 handshake across browsers."
-        )
-        prevention = "Set Cert-Manager renewal offset to 30 days prior to certificate expiration."
-
-    elif "outlook" in sig_lower or "exchange" in sig_lower or "mailbox" in sig_lower or "ost" in sig_lower:
-        matched_title = "Outlook MAPI Profile Corruption & OST Synchronization Lock"
-        root_cause = "Corrupt offline Outlook storage file (.ost) locking the background Exchange MAPI synchronization thread."
-        solution = (
-            steps or
-            "1. Gracefully terminate stranded `OUTLOOK.EXE` processes\n"
-            "2. Rename corrupt cache: `ren %LOCALAPPDATA%\\Microsoft\\Outlook\\*.ost *.ost.bak`\n"
-            "3. Launch Outlook in safe mode to initiate background cache rehydration\n"
-            "4. Confirm mailbox status reports 'All folders up to date'."
-        )
-        prevention = "Deploy group policy to limit offline cache duration to 6 months."
-
-    elif "redis" in sig_lower or "cache" in sig_lower or "noauth" in sig_lower:
-        matched_title = "Redis Distributed Cache Authentication Failure & Key Lockout"
-        root_cause = "Secret rotation updated the Redis cluster password without updating downstream microservice configuration maps."
-        solution = (
-            steps or
-            "1. Fetch updated Redis authentication secret from HashiCorp Vault\n"
-            "2. Patch application deployment environment variable `REDIS_PASSWORD`\n"
-            "3. Perform rolling container restart across API replicas\n"
-            "4. Execute `redis-cli ping` to confirm `PONG` response across nodes."
-        )
-        prevention = "Configure automated Vault agent sidecars to dynamically reload credentials."
-
-    elif "docker" in sig_lower or "container" in sig_lower:
-        matched_title = "Docker Daemon Socket Unresponsive & Resource Exhaustion"
-        root_cause = "Docker socket (/var/run/docker.sock) exhausted file descriptors due to orphaned stopped containers."
-        solution = (
-            steps or
-            "1. Execute container pruning: `docker container prune -f && docker image prune -a --filter 'until=24h' -f`\n"
-            "2. Restart Docker systemd daemon: `sudo systemctl restart docker`\n"
-            "3. Verify daemon socket responds: `docker info`\n"
-            "4. Re-launch required service stacks."
-        )
-        prevention = "Set up a daily cron task for automated Docker system pruning."
-
-    elif "password" in sig_lower or "active directory" in sig_lower or "kerberos" in sig_lower or "lockout" in sig_lower:
-        matched_title = "Active Directory Account Lockout & Kerberos Ticket Expiry"
-        root_cause = "Cached network credentials on a secondary mobile device triggered repeated failed auth attempts, hitting the 5-attempt lockout policy."
-        solution = (
-            steps or
-            "1. Unlock Active Directory user account: `Unlock-ADAccount -Identity $Username`\n"
-            "2. Purge stale Kerberos tickets: `klist purge`\n"
-            "3. Force password sync across replication domain controllers\n"
-            "4. Verify employee login status with clean MFA challenge."
-        )
-        prevention = "Configure Intune conditional access to quarantine outdated mobile device tokens."
-
-    else:
-        matched_title = f"Enterprise Runbook Incident Pattern ({error_signature.replace('_', ' ')})"
-        root_cause = (
-            f"Correlated with enterprise diagnostic runbook telemetry for {title}. "
-            "Telemetry indicates protocol timeout or configuration state mismatch."
-        )
-        solution = (
-            steps or
-            f"1. Run diagnostics on affected subsystem ({error_signature}).\n"
-            "2. Invalidate stale identity session tokens and clear application cache.\n"
-            "3. Restart target background worker process and verify health probe responds 200 OK.\n"
-            "4. Test end-to-end transaction latency and confirm stable state."
-        )
-        prevention = "Record verified resolution into Hindsight memory bank for continuous autonomous self-healing."
-
     return DiagnosticInsights(
-        matched_pattern_title=matched_title,
-        matched_ticket_id=matched_id,
-        confidence_percent=confidence_pct if confidence_pct > 0 else 82,
-        detected_signature=error_signature,
-        root_cause_analysis=root_cause,
-        recommended_solution=solution,
-        prevention_tip=prevention,
+        matched_pattern_title=prop_data["matched_pattern_title"],
+        matched_ticket_id=prop_data["matched_ticket_id"],
+        confidence_percent=prop_data["confidence_percent"],
+        detected_signature=prop_data["detected_signature"],
+        root_cause_analysis=prop_data["root_cause_analysis"],
+        recommended_solution=prop_data["recommended_solution"],
+        prevention_tip=prop_data["prevention_tip"],
     )
 
 
@@ -385,6 +288,7 @@ def generate_guidance_insights(
 async def startup_event():
     logger.info("Initializing Autofix-AI Backend Engine...")
     load_users()
+    init_knowledge_bank_db()
     initialize_hindsight_client()
 
     # Step 1: Restore persistent tickets from disk if present
@@ -463,6 +367,23 @@ async def startup_event():
                     del TICKET_STORE[purge_id]
             await adelete_ticket_memory("TICKET-123")
             await adelete_ticket_memory("123")
+
+            # Seed SQLite Knowledge Bank nodes with all current tickets
+            for tid, t in TICKET_STORE.items():
+                record_ticket_in_bank(
+                    ticket_id=t.id,
+                    title=t.title,
+                    description=t.description,
+                    error_signature=t.error_signature,
+                    resolution_steps=t.resolution_steps,
+                    status=t.status,
+                    priority=t.priority,
+                    category=t.category,
+                    confidence=t.confidence_score,
+                    resolution_type=t.resolution_type or "AUTONOMOUS",
+                    metadata={"client_name": t.client_name},
+                    source="bank",
+                )
 
             # Persist merged store to file
             save_tickets_to_file()
@@ -648,6 +569,7 @@ async def create_ticket(
                 "client_name": client_name,
                 "confidence": confidence,
             },
+            cloud_document_id=f"{ticket_id.lower()}.txt",
         )
 
         messages.append(
@@ -670,6 +592,22 @@ async def create_ticket(
         ticket_status = "PENDING_HUMAN_REVIEW"
         res_type = None
 
+        # CRITICAL USER REQUIREMENT: Retain all newly raised tickets into Hindsight Cloud & Knowledge Bank
+        await arecord_ticket_resolution(
+            ticket_id=ticket_id,
+            error_signature=error_signature,
+            resolution_steps=guidance.recommended_solution,
+            resolution_type="HUMAN_IN_THE_LOOP",
+            metadata={
+                "title": title,
+                "category": category,
+                "priority": priority,
+                "client_name": client_name,
+                "confidence": confidence,
+            },
+            cloud_document_id=f"{ticket_id.lower()}.txt",
+        )
+
         messages.append(
             Message(
                 sender="Hindsight Agent",
@@ -684,6 +622,28 @@ async def create_ticket(
                 ),
             )
         )
+
+    # Ingest nodes into SQLite Knowledge Bank for every ticket (both cloud and offline fallback)
+    record_ticket_in_bank(
+        ticket_id=ticket_id,
+        title=title,
+        description=description,
+        error_signature=error_signature,
+        resolution_steps=guidance.recommended_solution,
+        status=ticket_status,
+        priority=priority,
+        category=category,
+        confidence=confidence,
+        resolution_type=res_type or "HUMAN_IN_THE_LOOP",
+        metadata={
+            "title": title,
+            "category": category,
+            "priority": priority,
+            "client_name": client_name,
+            "confidence": confidence,
+        },
+        source="cloud" if is_cloud_mode() else "bank",
+    )
 
     new_ticket = Ticket(
         id=ticket_id,
@@ -710,32 +670,17 @@ async def create_ticket(
     TICKET_STORE[ticket_id] = new_ticket
     save_tickets_to_file()
 
-    # If resolved autonomously, immediately record into Hindsight persistent memory
-    if ticket_status == "RESOLVED_AUTONOMOUSLY":
-        record_ticket_resolution(
-            ticket_id=ticket_id,
-            error_signature=error_signature,
-            resolution_steps=guidance.recommended_solution,
-            resolution_type="AUTONOMOUS",
-            metadata={
-                "title": title,
-                "category": category,
-                "priority": priority,
-                "client_name": client_name,
-            },
-        )
-
     logger.info(f"Ticket {ticket_id} processed. Status: {ticket_status} (Confidence: {confidence:.2f})")
     return new_ticket
 
 
 @app.post("/api/tickets/{ticket_id}/feedback", response_model=Ticket, tags=["Human-In-The-Loop"])
-def submit_feedback(ticket_id: str, payload: FeedbackRequest):
+async def submit_feedback(ticket_id: str, payload: FeedbackRequest):
     """
     Human-In-The-Loop Verification & Approval:
     Takes an engineer's verified resolution steps, executes the fix,
     updates ticket to RESOLVED_HUMAN_VERIFIED, and immediately ingests
-    the interaction into Hindsight Memory.
+    the interaction into Hindsight Memory and the SQLite Knowledge Bank.
     """
     ticket = TICKET_STORE.get(ticket_id)
     if not ticket:
@@ -747,8 +692,8 @@ def submit_feedback(ticket_id: str, payload: FeedbackRequest):
     # Execute simulated remediation
     exec_res = simulate_fix(payload.resolution_steps, ticket_id)
 
-    # CRITICAL LEARNING HOOK: Record human correction into Hindsight
-    record_ticket_resolution(
+    # CRITICAL LEARNING HOOK: Record human correction into Hindsight Cloud
+    await arecord_ticket_resolution(
         ticket_id=ticket_id,
         error_signature=ticket.error_signature,
         resolution_steps=payload.resolution_steps,
@@ -760,6 +705,23 @@ def submit_feedback(ticket_id: str, payload: FeedbackRequest):
             "client_name": ticket.client_name,
             "approved_by": payload.approved_by,
         },
+        cloud_document_id=f"{ticket_id.lower()}.txt",
+    )
+
+    # Ingest and update nodes in SQLite Knowledge Bank
+    record_ticket_in_bank(
+        ticket_id=ticket.id,
+        title=ticket.title,
+        description=ticket.description,
+        error_signature=ticket.error_signature,
+        resolution_steps=payload.resolution_steps,
+        status="RESOLVED_HUMAN_VERIFIED",
+        priority=ticket.priority,
+        category=ticket.category,
+        confidence=1.0,
+        resolution_type="HUMAN_IN_THE_LOOP",
+        metadata={"client_name": ticket.client_name, "approved_by": payload.approved_by},
+        source="cloud" if is_cloud_mode() else "bank",
     )
 
     # Update ticket state
@@ -767,7 +729,10 @@ def submit_feedback(ticket_id: str, payload: FeedbackRequest):
     ticket.resolution_type = "HUMAN_IN_THE_LOOP"
     ticket.resolution_steps = payload.resolution_steps
     ticket.execution_result = exec_res
-    ticket.confidence_score = 1.0  # Human verified
+    ticket.confidence_score = 1.0  # Human verified 100%
+    if ticket.diagnostic_insights:
+        ticket.diagnostic_insights.confidence_percent = 100
+        ticket.diagnostic_insights.recommended_solution = payload.resolution_steps
     ticket.resolved_at = datetime.datetime.now().isoformat()
 
     ticket.messages.append(
@@ -781,7 +746,7 @@ def submit_feedback(ticket_id: str, payload: FeedbackRequest):
         Message(
             sender="Hindsight Agent",
             role="system",
-            content="✅ Learned and indexed solution into Hindsight Memory. Future identical incidents will now be resolved autonomously.",
+            content="✅ Learned and indexed solution into Hindsight Memory. Confidence updated to 100%. Future identical incidents will now be resolved autonomously.",
         )
     )
 
@@ -1034,6 +999,53 @@ async def configure_hindsight_cloud(payload: HindsightConfigRequest):
         initialize_hindsight_client(api_key=key, base_url=url, bank_id=bank, force_reinit=True)
 
     return test_res
+
+
+# ==========================================
+# Knowledge Graph & Visualization Endpoints
+# ==========================================
+
+@app.get("/api/knowledge/graph", tags=["Knowledge Bank"])
+async def get_knowledge_graph_endpoint():
+    """
+    Returns nodes and edges for the Knowledge Graph visualization,
+    along with online/offline cloud and bank status.
+    """
+    graph = get_cached_graph()
+    data = graph.to_dict()
+    stats = await aget_memory_stats()
+    data["cloud_status"] = stats["cloud_status"]
+    data["bank_status"] = stats["bank_status"]
+    data["cloud_mode_enabled"] = stats["cloud_mode_enabled"]
+    data["is_cloud_connected"] = stats["is_cloud_connected"]
+    return data
+
+
+@app.get("/api/knowledge/tree", tags=["Knowledge Bank"])
+async def get_knowledge_tree_endpoint():
+    """
+    Returns hierarchical taxonomy: Categories -> Error Signatures -> Tickets -> Resolutions.
+    """
+    tree = get_cached_tree()
+    return tree.to_tree_list()
+
+
+@app.get("/api/knowledge/analytics", tags=["Knowledge Bank"])
+async def get_knowledge_analytics_endpoint():
+    """
+    Returns data for the Normal Graphs dashboard:
+    - Confidence score distribution (<10%, 10-29%, 30-49%, 50-69%, 70-84%, >=85%)
+    - Category distribution
+    - Status distribution (Autonomous vs Human Verified vs Pending)
+    - Sync metrics (Cloud vs Bank)
+    """
+    analytics = get_bank_analytics()
+    stats = await aget_memory_stats()
+    analytics["cloud_status"] = stats["cloud_status"]
+    analytics["bank_status"] = stats["bank_status"]
+    analytics["cloud_mode_enabled"] = stats["cloud_mode_enabled"]
+    analytics["is_cloud_connected"] = stats["is_cloud_connected"]
+    return analytics
 
 
 # ==========================================

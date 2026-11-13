@@ -1,25 +1,34 @@
 /**
  * API URL resolver for Autofix-AI.
- * Automatically resolves to the live production Render backend when hosted on onrender.com,
- * while allowing local development on http://localhost:8000.
+ * Intelligently switches between local and deployed environments:
+ * - Localhost / Private Network: connects to http://localhost:8000 (ensuring offline SQLite bank fallback works without internet)
+ * - Cloud Deployment: connects to deployed cloud backend (e.g. Render, Railway, custom domain)
  */
 export const getApiUrl = (): string => {
-  if (
-    process.env.NEXT_PUBLIC_API_URL &&
-    process.env.NEXT_PUBLIC_API_URL !== "http://localhost:8000" &&
-    process.env.NEXT_PUBLIC_API_URL !== "http://127.0.0.1:8000"
-  ) {
+  // 1. Client-side hostname-based intelligent routing
+  if (typeof window !== "undefined") {
+    const host = window.location.hostname;
+    // Local / offline / container network: always route to local FastAPI backend
+    if (
+      host === "localhost" ||
+      host === "127.0.0.1" ||
+      host === "0.0.0.0" ||
+      host.startsWith("192.168.") ||
+      host.startsWith("10.")
+    ) {
+      return "http://localhost:8000";
+    }
+
+    // Render cloud deployment detection
+    if (host.includes("onrender.com") || host.includes("render")) {
+      return "https://autofix-ai-backend-51vk.onrender.com";
+    }
+  }
+
+  // 2. Explicit environment variable if configured
+  if (process.env.NEXT_PUBLIC_API_URL) {
     return process.env.NEXT_PUBLIC_API_URL;
   }
 
-  // Automatic Render cloud detection
-  if (
-    typeof window !== "undefined" &&
-    (window.location.hostname.includes("onrender.com") ||
-      window.location.hostname.includes("render"))
-  ) {
-    return "https://autofix-ai-backend-51vk.onrender.com";
-  }
-
-  return process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+  return "http://localhost:8000";
 };

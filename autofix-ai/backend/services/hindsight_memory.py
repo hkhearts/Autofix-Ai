@@ -16,6 +16,16 @@ from typing import Any, Dict, List, Optional
 
 from dotenv import load_dotenv
 
+from backend.services.knowledge_bank import (
+    init_knowledge_bank_db,
+    record_ticket_in_bank,
+    search_bank_matches,
+    get_cached_graph,
+    get_cached_tree,
+    get_bank_analytics,
+    generate_proportional_response,
+)
+
 load_dotenv()
 
 logger = logging.getLogger("autofix.hindsight_memory")
@@ -109,8 +119,8 @@ class LocalMemoryStore:
             # Boost if exact signature match
             if query.upper() in doc['error_signature'].upper():
                 score = max(score, 0.95)
-            elif any(t in doc['error_signature'].lower() for t in tokens if len(t) > 3):
-                score = min(1.0, score + 0.25)
+            elif len(intersection) >= 3 and any(t in doc['error_signature'].lower() for t in tokens if len(t) > 3):
+                score = min(0.95, score + 0.15)
 
             results.append({
                 "ticket_id": tid,
@@ -123,20 +133,18 @@ class LocalMemoryStore:
             })
 
         if not results:
-            # Fallback to top historical items if no token match found
+            # Return low-confidence candidates (<10%) when no semantic token match is found
             for tid, doc in list(self.records.items())[:top_k]:
                 results.append({
                     "ticket_id": tid,
-                    "confidence": 0.85,
+                    "confidence": 0.05,
                     "resolution_steps": doc["resolution_steps"],
                     "error_signature": doc["error_signature"],
                     "resolution_type": doc["resolution_type"],
                     "metadata": doc.get("metadata", {}),
                     "timestamp": doc["timestamp"],
                 })
-
-        results.sort(key=lambda x: x["confidence"], reverse=True)
-        return results[:top_k]
+            return results
 
 
 _local_store = LocalMemoryStore()
@@ -230,29 +238,41 @@ async def arecall_resolution(error_signature: str, query_text: str = "") -> Dict
     Intelligent Hybrid Recall Engine:
     1. If Cloud Mode is active (default), directly queries Vectorize Hindsight Cloud SDK using
        live account credits for high-precision semantic recall across historical runbooks.
-    2. If Cloud Mode is toggled to 'Credit Saver' or offline, utilizes local high-speed vector memory.
-    3. Seamlessly falls back to local vector memory if Cloud API experiences rate limits or credit exhaustion.
+    2. If Cloud Mode is toggled to 'Credit Saver' or offline, utilizes local SQLite Knowledge Bank
+       and graph data structure.
+    3. Seamlessly falls back to SQLite Knowledge Bank if Cloud API experiences rate limits or credit exhaustion.
     """
     initialize_hindsight_client()
     search_query = f"{error_signature} {query_text}".strip()
 
-    # Step A: Local High-Speed Vector Memory Search
+    # Step A: Local High-Speed Vector Memory & SQLite Knowledge Bank Search
     local_matches = _local_store.search(search_query)
-    best_local = local_matches[0] if local_matches else None
+    bank_matches = search_bank_matches(query_text=query_text, error_signature=error_signature, top_k=5)
 
-    # Credit Saver optimization: Only prioritize local when Cloud Mode is switched OFF
-    if not is_cloud_mode() and best_local and best_local["confidence"] >= 0.85:
+    # Pick best local / bank candidate
+    best_candidate = None
+    if bank_matches and local_matches:
+        best_candidate = bank_matches[0] if bank_matches[0]["confidence"] >= local_matches[0]["confidence"] else local_matches[0]
+    elif bank_matches:
+        best_candidate = bank_matches[0]
+    elif local_matches:
+        best_candidate = local_matches[0]
+
+    # Credit Saver / Fallback optimization: Only prioritize local when Cloud Mode is switched OFF
+    if not is_cloud_mode() and best_candidate:
         logger.info(
-            f"[CREDIT SAVER ACTIVE] Local high-confidence match ({best_local['confidence']:.2f}) used. "
+            f"[FALLBACK BANK ACTIVE] SQLite Bank match ({best_candidate['confidence']:.2f}) used. "
             f"Conserving Hindsight Cloud credits."
         )
         return {
             "found": True,
-            "confidence": best_local["confidence"],
-            "resolution_steps": best_local["resolution_steps"],
-            "matched_ticket_id": best_local["ticket_id"],
-            "history": local_matches,
-            "source": "local_vector_memory",
+            "confidence": best_candidate["confidence"],
+            "resolution_steps": best_candidate["resolution_steps"],
+            "matched_ticket_id": best_candidate["ticket_id"],
+            "title": best_candidate.get("title") or best_candidate.get("metadata", {}).get("title", ""),
+            "error_signature": best_candidate.get("error_signature", error_signature),
+            "history": bank_matches or local_matches,
+            "source": "sqlite_bank",
             "fallback_used": True,
             "credits_saved": True,
         }
@@ -293,28 +313,30 @@ async def arecall_resolution(error_signature: str, query_text: str = "") -> Dict
         except Exception as e:
             err_msg = str(e).lower()
             if any(k in err_msg for k in ["credit", "quota", "balance", "402", "429", "rate limit", "billing"]):
-                logger.warning(f"[CREDIT FALLBACK] Hindsight Cloud credit/quota limit: {e}. Falling back to local vector memory.")
+                logger.warning(f"[CREDIT FALLBACK] Hindsight Cloud credit/quota limit: {e}. Falling back to SQLite Knowledge Bank.")
             else:
-                logger.warning(f"Hindsight Cloud recall error: {e}. Falling back to local vector memory.")
+                logger.warning(f"Hindsight Cloud recall error: {e}. Falling back to SQLite Knowledge Bank.")
 
     # Return best between Cloud and Local
-    if cloud_result and (not best_local or cloud_result["confidence"] >= best_local["confidence"]):
+    if cloud_result and (not best_candidate or cloud_result["confidence"] >= best_candidate["confidence"]):
         return cloud_result
 
-    if best_local:
+    if best_candidate:
         return {
             "found": True,
-            "confidence": best_local["confidence"],
-            "resolution_steps": best_local["resolution_steps"],
-            "matched_ticket_id": best_local["ticket_id"],
-            "history": local_matches,
-            "source": "local_vector_memory",
+            "confidence": best_candidate["confidence"],
+            "resolution_steps": best_candidate["resolution_steps"],
+            "matched_ticket_id": best_candidate["ticket_id"],
+            "title": best_candidate.get("title") or best_candidate.get("metadata", {}).get("title", ""),
+            "error_signature": best_candidate.get("error_signature", error_signature),
+            "history": bank_matches or local_matches,
+            "source": "sqlite_bank",
             "fallback_used": True,
         }
 
     return {
         "found": False,
-        "confidence": 0.0,
+        "confidence": 0.05,
         "resolution_steps": "",
         "matched_ticket_id": None,
         "history": [],
@@ -377,6 +399,25 @@ async def arecord_ticket_resolution(
     # Always persist to local vector store
     _local_store.add(ticket_id, error_signature, resolution_steps, res_type, metadata)
     logger.info(f"Recorded ticket {ticket_id} [{res_type}] into vector memory.")
+
+    # Also persist to SQLite Knowledge Bank (Graph & Tree structures)
+    try:
+        record_ticket_in_bank(
+            ticket_id=ticket_id,
+            title=metadata.get("title", ticket_id),
+            description=metadata.get("description", metadata.get("title", "")),
+            error_signature=error_signature,
+            resolution_steps=resolution_steps,
+            status="RESOLVED_AUTONOMOUSLY" if res_type == "AUTONOMOUS" else "RESOLVED_HUMAN_VERIFIED",
+            priority=metadata.get("priority", "Medium"),
+            category=metadata.get("category", "L1"),
+            confidence=0.96 if res_type == "AUTONOMOUS" else 1.0,
+            resolution_type=res_type,
+            metadata=metadata,
+            source="cloud" if (_hindsight_client and is_cloud_mode()) else "bank",
+        )
+    except Exception as e:
+        logger.warning(f"Error persisting to SQLite knowledge bank: {e}")
 
     # Ingest to Vectorize Hindsight Cloud if client available
     initialize_hindsight_client()
@@ -485,11 +526,19 @@ async def aget_memory_stats() -> Dict[str, Any]:
             hitl_count = total_local - autonomous_count
             last_updated = _local_store.last_updated
 
+    cached_graph = get_cached_graph()
+    bank_nodes_count = len(cached_graph.nodes)
+    bank_edges_count = len(cached_graph.edges)
+
     return {
         "bank_id": HINDSIGHT_BANK_ID,
         "base_url": HINDSIGHT_BASE_URL,
         "is_cloud_connected": cloud_connected,
         "cloud_mode_enabled": is_cloud_mode(),
+        "cloud_status": "Online" if (cloud_connected and is_cloud_mode()) else "Offline",
+        "bank_status": "Online",
+        "bank_nodes_count": bank_nodes_count,
+        "bank_edges_count": bank_edges_count,
         "total_records": total_records,
         "local_records": total_local,
         "autonomous_resolutions": autonomous_count,
@@ -497,7 +546,7 @@ async def aget_memory_stats() -> Dict[str, Any]:
         "confidence_threshold": CONFIDENCE_THRESHOLD,
         "last_updated": last_updated,
         "fallback_system_active": not is_cloud_mode(),
-        "fallback_mode": "hindsight_cloud_online" if is_cloud_mode() else "hybrid_credit_saver",
+        "fallback_mode": "hindsight_cloud_online" if is_cloud_mode() else "sqlite_bank_fallback",
         "credits_protected": not is_cloud_mode(),
         "promo_code": "MEMHACK99",
         "cloud_console_url": "https://ui.hindsight.vectorize.io",
