@@ -102,6 +102,28 @@ class HindsightMemoryTests(unittest.TestCase):
         self.assertNotEqual(recall["matched_ticket_id"], "ticket-outlook.txt")
         self.assertLess(recall["confidence"], 0.85)
 
+    def test_same_signature_with_wrong_runbook_is_not_autonomous(self):
+        result = SimpleNamespace(
+            text="Resolved Outlook SSO loop by clearing Microsoft Identity credentials.",
+            scores=SimpleNamespace(final=1.0, semantic=1.0),
+            document_id="ticket-blue-screen.txt",
+            metadata={"signature": "WINDOWS_BLUE_SCREEN_DRIVER_FAILURE"},
+        )
+        client = MagicMock()
+        client.arecall = AsyncMock(return_value=SimpleNamespace(results=[result]))
+
+        with patch.object(hindsight_memory, "initialize_hindsight_client"), patch.object(
+            hindsight_memory, "_hindsight_client", client
+        ):
+            recall = asyncio.run(
+                hindsight_memory.arecall_resolution(
+                    "WINDOWS_BLUE_SCREEN_DRIVER_FAILURE",
+                    "blue screen CRITICAL_PROCESS_DIED after display driver update",
+                )
+            )
+
+        self.assertLess(recall["confidence"], 0.85)
+
     def test_stats_report_cloud_document_and_resolution_counts(self):
         client = MagicMock()
         client.alist_memories = AsyncMock()

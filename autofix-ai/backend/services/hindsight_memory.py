@@ -76,6 +76,17 @@ def _signature_is_relevant(query_signature: str, candidate_signature: str) -> bo
     return len(overlap) >= 2 and len(overlap) / len(query_tokens) >= 0.5
 
 
+def _resolution_is_relevant(query_text: str, resolution_steps: str) -> bool:
+    ignored = {"error", "failure", "issue", "system", "user", "ticket", "after", "with"}
+    query_tokens = {
+        token for token in re.findall(r"[a-z0-9]+", (query_text or "").lower())
+        if (len(token) >= 4 or token in {"vpn", "sso", "dns", "ssl", "mfa", "k8s"})
+        and token not in ignored
+    }
+    resolution_tokens = set(re.findall(r"[a-z0-9]+", (resolution_steps or "").lower()))
+    return bool(query_tokens.intersection(resolution_tokens))
+
+
 # Local in-memory / persistent fallback memory store
 class LocalMemoryStore:
     def __init__(self):
@@ -345,8 +356,10 @@ async def arecall_resolution(error_signature: str, query_text: str = "") -> Dict
                 text_tokens = set(re.findall(r"[a-z0-9]+", (text or "").lower()))
                 signature_overlap = query_tokens.intersection(recalled_tokens)
                 content_overlap = query_tokens.intersection(text_tokens)
-                if (recalled_signature and not _signature_is_relevant(error_signature, recalled_signature)) or (
-                    not recalled_signature and len(content_overlap) < 2
+                if (
+                    (recalled_signature and not _signature_is_relevant(error_signature, recalled_signature))
+                    or not _resolution_is_relevant(query_text, text)
+                    or (not recalled_signature and len(content_overlap) < 2)
                 ):
                     logger.warning(
                         "[HINDSIGHT CLOUD] Rejected unrelated recall for %s (signature=%s).",
