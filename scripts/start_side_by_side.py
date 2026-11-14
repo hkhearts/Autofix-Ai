@@ -142,9 +142,37 @@ def main():
     else:
         print("  ! Frontend window not yet registered for tiling.")
 
-    # Automatically open browser
-    time.sleep(1.0)
-    print("\nOpening application console at http://localhost:3000 in your browser...")
+    # Wait until Next.js is fully compiled and serving HTTP 200 before launching the browser!
+    print("\n[WAITING] Next.js is compiling the project... Please wait.")
+    print("Browser will open automatically once compilation is complete.")
+    
+    compiled = False
+    start_poll = time.time()
+    max_wait = 90  # up to 90 seconds
+    
+    import urllib.request
+    
+    while time.time() - start_poll < max_wait:
+        time.sleep(1.0)
+        try:
+            req = urllib.request.Request(
+                "http://127.0.0.1:3000",
+                headers={"User-Agent": "AutofixAI-StartupCheck"}
+            )
+            with urllib.request.urlopen(req, timeout=2.5) as resp:
+                if resp.status in (200, 304, 307, 308):
+                    compiled = True
+                    break
+        except Exception:
+            elapsed = int(time.time() - start_poll)
+            sys.stdout.write(f"\r  ⏳ Compiling frontend project... ({elapsed}s elapsed)")
+            sys.stdout.flush()
+
+    if compiled:
+        print(f"\n\n  ✅ Project compiled successfully! Opening http://localhost:3000 in your browser...")
+    else:
+        print(f"\n\n  ⚠️ Compilation wait timed out. Opening http://localhost:3000 now...")
+
     try:
         webbrowser.open("http://localhost:3000")
     except Exception as e:

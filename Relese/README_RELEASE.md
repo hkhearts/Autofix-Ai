@@ -57,6 +57,5 @@ This opens the AI backend on the left half and localhost frontend on the right h
 ## 🌐 Endpoints
 
 - **Frontend Dashboard**: [http://localhost:3000/dashboard](http://localhost:3000/dashboard)
-- **Knowledge Graph Visuals**: [http://localhost:3000/dashboard/hind-visuals](http://localhost:3000/dashboard/hind-visuals)
 - **FastAPI Interactive Docs**: [http://localhost:8000/docs](http://localhost:8000/docs)
 - **Backend Health Check**: [http://localhost:8000/health](http://localhost:8000/health)

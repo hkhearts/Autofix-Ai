@@ -15,7 +15,6 @@ import {
   Plus,
   Sparkles,
   Check,
-  Network,
 } from "lucide-react";
 import { UserSession } from "../types/ticket";
 import { useTheme } from "../context/ThemeContext";
@@ -117,15 +116,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                 )}
               </button>
             ))}
-
-            <Link
-              href="/dashboard/hind-visuals"
-              className="h-full px-3 text-xs font-bold tracking-wider transition-all flex items-center space-x-1.5 text-yellow-600 dark:text-yellow-400 hover:text-yellow-500 rounded-lg hover:bg-yellow-400/10"
-              title="Open Knowledge Graph & Cloud Analytics (3 Windows)"
-            >
-              <Network className="w-3.5 h-3.5" />
-              <span>HIND VISUALS</span>
-            </Link>
           </nav>
         </div>
 

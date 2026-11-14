@@ -1,7 +1,7 @@
 {
   "TICKET-120": {
     "id": "TICKET-120",
-    "title": "Quasar Astrophysics Stellar Spectroscopy Divergence 6c2011",
+    "title": "Quasar Astrophysics Stellar Spectroscopy Divergence bd328f",
     "description": "Telescope focal interferometer frequency calibration drift without correlation",
     "client_name": "Artist User",
     "priority": "Low",
@@ -17,29 +17,29 @@
       "matched_ticket_id": "TICK-101",
       "confidence_percent": 5,
       "detected_signature": "QUASAR_ASTROPHYSICS_STELLAR_SPECTROSCOPY_DIVERGENCE",
-      "root_cause_analysis": "Novel error pattern detected with <10% vector correlation to existing enterprise runbooks. Primary tokens (frequency, calibration, drift, stellar) show negligible semantic overlap with known historical incidents.",
+      "root_cause_analysis": "Novel error pattern detected with <10% vector correlation to existing enterprise runbooks. Primary tokens (correlation, astrophysics, bd328f, spectroscopy) show negligible semantic overlap with known historical incidents.",
       "recommended_solution": "1. Collect full diagnostic system logs, event viewer stack traces, and local environment variables.\n2. Verify host reachability, default gateway latency, and basic port availability.\n3. Isolate application process and check for unhandled exceptions or resource exhaustion.\n4. Await human engineer review and domain classification to index this novel resolution.",
       "prevention_tip": "Record verified remediation into Hindsight memory bank to train autonomous models on this new pattern."
     },
     "messages": [
       {
-        "id": "MSG-c8cb82",
+        "id": "MSG-1c0fba",
         "sender": "Artist User",
         "role": "user",
         "content": "Telescope focal interferometer frequency calibration drift without correlation",
-        "timestamp": "2026-11-13T23:55:31.723439"
+        "timestamp": "2026-11-14T08:06:29.742181"
       },
       {
-        "id": "MSG-c3765d",
+        "id": "MSG-cfcc97",
         "sender": "Hindsight Agent",
         "role": "agent",
-        "content": "\ud83d\udd0d Hindsight Pattern Match (5% Match):\n\u2022 Correlated Pattern: Uncorrelated Incident Telemetry [QUASAR_ASTROPHYSICS_STELLAR_SPECTROSCOPY_DIVERGENCE]\n\u2022 Diagnostic Root Cause: Novel error pattern detected with <10% vector correlation to existing enterprise runbooks. Primary tokens (frequency, calibration, drift, stellar) show negligible semantic overlap with known historical incidents.\n\nRecommended Remediation Protocol:\n1. Collect full diagnostic system logs, event viewer stack traces, and local environment variables.\n2. Verify host reachability, default gateway latency, and basic port availability.\n3. Isolate application process and check for unhandled exceptions or resource exhaustion.\n4. Await human engineer review and domain classification to index this novel resolution.\n\n\u26a0\ufe0f Confidence (5%) requires human approval. Review or adjust the steps and click 'Approve & Solve'.",
-        "timestamp": "2026-11-13T23:55:32.164465"
+        "content": "\ud83d\udd0d Hindsight Pattern Match (5% Match):\n\u2022 Correlated Pattern: Uncorrelated Incident Telemetry [QUASAR_ASTROPHYSICS_STELLAR_SPECTROSCOPY_DIVERGENCE]\n\u2022 Diagnostic Root Cause: Novel error pattern detected with <10% vector correlation to existing enterprise runbooks. Primary tokens (correlation, astrophysics, bd328f, spectroscopy) show negligible semantic overlap with known historical incidents.\n\nRecommended Remediation Protocol:\n1. Collect full diagnostic system logs, event viewer stack traces, and local environment variables.\n2. Verify host reachability, default gateway latency, and basic port availability.\n3. Isolate application process and check for unhandled exceptions or resource exhaustion.\n4. Await human engineer review and domain classification to index this novel resolution.\n\n\u26a0\ufe0f Confidence (5%) requires human approval. Review or adjust the steps and click 'Approve & Solve'.",
+        "timestamp": "2026-11-14T08:06:30.271871"
       }
     ],
     "screenshot_preview": null,
     "company_id": "acme-corp",
-    "created_at": "2026-11-13T23:55:31.723439",
+    "created_at": "2026-11-14T08:06:29.742181",
     "resolved_at": null,
     "tags": [
       "l1",
@@ -48,7 +48,7 @@
   },
   "TICKET-121": {
     "id": "TICKET-121",
-    "title": "Gateway Timeout Failure on VPN Port 52fd",
+    "title": "Gateway Timeout Failure on VPN Port f6a5",
     "description": "User connection dropped with gateway unreachable timeout",
     "client_name": "Alice Green",
     "priority": "High",
@@ -64,29 +64,29 @@
       "matched_ticket_id": "TICK-102",
       "confidence_percent": 45,
       "detected_signature": "VPN_GATEWAY_TIMEOUT_FAILURE_PORT",
-      "root_cause_analysis": "Partial vector match (45%) correlated directly with historical incident #TICK-102 (CISCO_ANYCONNECT_GATEWAY_TIMEOUT_IP_FORWARDING_FAIL). Symptoms share key operational attributes: 'timeout, failure, 52fd, dropped'. Historical root cause in #TICK-102 was associated with protocol timeouts or state cache invalidation.",
+      "root_cause_analysis": "Partial vector match (45%) correlated directly with historical incident #TICK-102 (CISCO_ANYCONNECT_GATEWAY_TIMEOUT_IP_FORWARDING_FAIL). Symptoms share key operational attributes: 'user, failure, gateway, timeout'. Historical root cause in #TICK-102 was associated with protocol timeouts or state cache invalidation.",
       "recommended_solution": "Relevant historical insights from matched ticket #TICK-102 (Cisco AnyConnect VPN Connection Timeout (Gateway Unreachable)):\n1. Examine shared diagnostic telemetry matching VPN_GATEWAY_TIMEOUT_FAILURE_PORT.\n2. Apply preliminary recovery actions proven in ticket #TICK-102:\n   \u2022 1. Restart Cisco AnyConnect Secure Mobility Agent service (`net stop csc_vpnagent && net start csc_vpnagent`)\n   \u2022 2. Reset Windows Socket stack and flush DNS cache (`netsh winsock reset && ipconfig /flushdns`)\n3. Verify if target services restore normal latency; if persistent, proceed with human verification.",
-      "prevention_tip": "Enforce baseline telemetry monitoring for timeout, failure, 52fd, dropped across client endpoints."
+      "prevention_tip": "Enforce baseline telemetry monitoring for user, failure, gateway, timeout across client endpoints."
     },
     "messages": [
       {
-        "id": "MSG-41ed70",
+        "id": "MSG-f7cca1",
         "sender": "Alice Green",
         "role": "user",
         "content": "User connection dropped with gateway unreachable timeout",
-        "timestamp": "2026-11-13T23:55:32.633825"
+        "timestamp": "2026-11-14T08:06:30.719732"
       },
       {
-        "id": "MSG-ff0cf5",
+        "id": "MSG-066895",
         "sender": "Hindsight Agent",
         "role": "agent",
-        "content": "\ud83d\udd0d Hindsight Pattern Match (45% Match):\n\u2022 Correlated Pattern: Partial Correlation (45% Match with #TICK-102: Cisco AnyConnect VPN Connection Timeout (Gateway Unreachable))\n\u2022 Diagnostic Root Cause: Partial vector match (45%) correlated directly with historical incident #TICK-102 (CISCO_ANYCONNECT_GATEWAY_TIMEOUT_IP_FORWARDING_FAIL). Symptoms share key operational attributes: 'timeout, failure, 52fd, dropped'. Historical root cause in #TICK-102 was associated with protocol timeouts or state cache invalidation.\n\nRecommended Remediation Protocol:\nRelevant historical insights from matched ticket #TICK-102 (Cisco AnyConnect VPN Connection Timeout (Gateway Unreachable)):\n1. Examine shared diagnostic telemetry matching VPN_GATEWAY_TIMEOUT_FAILURE_PORT.\n2. Apply preliminary recovery actions proven in ticket #TICK-102:\n   \u2022 1. Restart Cisco AnyConnect Secure Mobility Agent service (`net stop csc_vpnagent && net start csc_vpnagent`)\n   \u2022 2. Reset Windows Socket stack and flush DNS cache (`netsh winsock reset && ipconfig /flushdns`)\n3. Verify if target services restore normal latency; if persistent, proceed with human verification.\n\n\u26a0\ufe0f Confidence (45%) requires human approval. Review or adjust the steps and click 'Approve & Solve'.",
-        "timestamp": "2026-11-13T23:55:33.104812"
+        "content": "\ud83d\udd0d Hindsight Pattern Match (45% Match):\n\u2022 Correlated Pattern: Partial Correlation (45% Match with #TICK-102: Cisco AnyConnect VPN Connection Timeout (Gateway Unreachable))\n\u2022 Diagnostic Root Cause: Partial vector match (45%) correlated directly with historical incident #TICK-102 (CISCO_ANYCONNECT_GATEWAY_TIMEOUT_IP_FORWARDING_FAIL). Symptoms share key operational attributes: 'user, failure, gateway, timeout'. Historical root cause in #TICK-102 was associated with protocol timeouts or state cache invalidation.\n\nRecommended Remediation Protocol:\nRelevant historical insights from matched ticket #TICK-102 (Cisco AnyConnect VPN Connection Timeout (Gateway Unreachable)):\n1. Examine shared diagnostic telemetry matching VPN_GATEWAY_TIMEOUT_FAILURE_PORT.\n2. Apply preliminary recovery actions proven in ticket #TICK-102:\n   \u2022 1. Restart Cisco AnyConnect Secure Mobility Agent service (`net stop csc_vpnagent && net start csc_vpnagent`)\n   \u2022 2. Reset Windows Socket stack and flush DNS cache (`netsh winsock reset && ipconfig /flushdns`)\n3. Verify if target services restore normal latency; if persistent, proceed with human verification.\n\n\u26a0\ufe0f Confidence (45%) requires human approval. Review or adjust the steps and click 'Approve & Solve'.",
+        "timestamp": "2026-11-14T08:06:31.158801"
       }
     ],
     "screenshot_preview": null,
     "company_id": "acme-corp",
-    "created_at": "2026-11-13T23:55:32.633825",
+    "created_at": "2026-11-14T08:06:30.719732",
     "resolved_at": null,
     "tags": [
       "l1",
@@ -115,7 +115,7 @@
       "simulated_output": [
         "[INIT] Autofix-AI Autonomous Execution Engine v2.4",
         "[TARGET] Ticket: TICKET-122 | Execution Mode: Containerized Sandbox",
-        "[TIMESTAMP] 2026-11-13 18:25:34 UTC",
+        "[TIMESTAMP] 2026-11-14 02:36:32 UTC",
         "---",
         "[STEP 1/3] Execute klist purge.",
         "  [EXEC] Running diagnostics: 'Execute klist purge.' -> Completed with code 0 (Success).",
@@ -134,44 +134,44 @@
       "matched_ticket_id": "TICK-105",
       "confidence_percent": 100,
       "detected_signature": "STALE_KERBEROS_SESSION_FLOOR",
-      "root_cause_analysis": "Novel error pattern detected with <10% vector correlation to existing enterprise runbooks. Primary tokens (session, floor, cannot, unlock) show negligible semantic overlap with known historical incidents.",
+      "root_cause_analysis": "Novel error pattern detected with <10% vector correlation to existing enterprise runbooks. Primary tokens (due, workstation, stale, cannot) show negligible semantic overlap with known historical incidents.",
       "recommended_solution": "1. Execute klist purge.\n2. Force AD resync.\n3. Verified login OK.",
       "prevention_tip": "Record verified remediation into Hindsight memory bank to train autonomous models on this new pattern."
     },
     "messages": [
       {
-        "id": "MSG-733a4a",
+        "id": "MSG-80b50f",
         "sender": "Bob Vance",
         "role": "user",
         "content": "Employee cannot unlock workstation due to outdated domain ticket",
-        "timestamp": "2026-11-13T23:55:33.627445"
+        "timestamp": "2026-11-14T08:06:31.590955"
       },
       {
-        "id": "MSG-a2ef45",
+        "id": "MSG-cc7462",
         "sender": "Hindsight Agent",
         "role": "agent",
-        "content": "\ud83d\udd0d Hindsight Pattern Match (9% Match):\n\u2022 Correlated Pattern: Uncorrelated Incident Telemetry [STALE_KERBEROS_SESSION_FLOOR]\n\u2022 Diagnostic Root Cause: Novel error pattern detected with <10% vector correlation to existing enterprise runbooks. Primary tokens (session, floor, cannot, unlock) show negligible semantic overlap with known historical incidents.\n\nRecommended Remediation Protocol:\n1. Collect full diagnostic system logs, event viewer stack traces, and local environment variables.\n2. Verify host reachability, default gateway latency, and basic port availability.\n3. Isolate application process and check for unhandled exceptions or resource exhaustion.\n4. Await human engineer review and domain classification to index this novel resolution.\n\n\u26a0\ufe0f Confidence (9%) requires human approval. Review or adjust the steps and click 'Approve & Solve'.",
-        "timestamp": "2026-11-13T23:55:34.111751"
+        "content": "\ud83d\udd0d Hindsight Pattern Match (9% Match):\n\u2022 Correlated Pattern: Uncorrelated Incident Telemetry [STALE_KERBEROS_SESSION_FLOOR]\n\u2022 Diagnostic Root Cause: Novel error pattern detected with <10% vector correlation to existing enterprise runbooks. Primary tokens (due, workstation, stale, cannot) show negligible semantic overlap with known historical incidents.\n\nRecommended Remediation Protocol:\n1. Collect full diagnostic system logs, event viewer stack traces, and local environment variables.\n2. Verify host reachability, default gateway latency, and basic port availability.\n3. Isolate application process and check for unhandled exceptions or resource exhaustion.\n4. Await human engineer review and domain classification to index this novel resolution.\n\n\u26a0\ufe0f Confidence (9%) requires human approval. Review or adjust the steps and click 'Approve & Solve'.",
+        "timestamp": "2026-11-14T08:06:32.043006"
       },
       {
-        "id": "MSG-9fc7cc",
+        "id": "MSG-0a9734",
         "sender": "Lead Systems Engineer",
         "role": "engineer",
         "content": "Verified Resolution Approved & Executed:\n1. Execute klist purge.\n2. Force AD resync.\n3. Verified login OK.",
-        "timestamp": "2026-11-13T23:55:35.696830"
+        "timestamp": "2026-11-14T08:06:33.442417"
       },
       {
-        "id": "MSG-c9de9d",
+        "id": "MSG-44d82c",
         "sender": "Hindsight Agent",
         "role": "system",
         "content": "\u2705 Learned and indexed solution into Hindsight Memory. Confidence updated to 100%. Future identical incidents will now be resolved autonomously.",
-        "timestamp": "2026-11-13T23:55:35.697364"
+        "timestamp": "2026-11-14T08:06:33.442417"
       }
     ],
     "screenshot_preview": null,
     "company_id": "acme-corp",
-    "created_at": "2026-11-13T23:55:33.627445",
-    "resolved_at": "2026-11-13T23:55:35.696830",
+    "created_at": "2026-11-14T08:06:31.590955",
+    "resolved_at": "2026-11-14T08:06:33.442417",
     "tags": [
       "l1",
       "medium"
