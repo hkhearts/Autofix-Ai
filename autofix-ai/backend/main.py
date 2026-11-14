@@ -144,6 +144,11 @@ class ProfileUpdateRequest(BaseModel):
 # In-memory ticket storage (keyed by ticket ID)
 TICKET_STORE: Dict[str, Ticket] = {}
 
+
+def create_ticket_id() -> str:
+    """Generate an ID that cannot collide with Hindsight documents after restart."""
+    return f"TICKET-{uuid.uuid4().hex[:10].upper()}"
+
 # Persistent user store
 USER_STORE_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "users.json")
 USERS_LIST: List[Dict[str, Any]] = []
@@ -501,8 +506,7 @@ async def create_ticket(
     4. Generates rich diagnostic insights & step-by-step guidance.
     5. Decision Gate: >= 0.85 -> Autonomous Execution & Learning Hook; < 0.85 -> Pending Human Review.
     """
-    ticket_num = len(TICKET_STORE) + 120
-    ticket_id = f"TICKET-{ticket_num}"
+    ticket_id = create_ticket_id()
 
     image_bytes = None
     image_mime = "image/png"
