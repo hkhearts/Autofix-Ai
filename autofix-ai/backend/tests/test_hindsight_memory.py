@@ -37,6 +37,7 @@ class HindsightMemoryTests(unittest.TestCase):
             id="memory-1",
             text="Restart the VPN agent and reset the socket stack.",
             scores=score,
+            metadata={"signature": "VPN_TIMEOUT"},
             document_id="tick-102.txt",
         )
         client = MagicMock()
@@ -52,6 +53,54 @@ class HindsightMemoryTests(unittest.TestCase):
         self.assertEqual(recall["source"], "hindsight_cloud")
         self.assertEqual(recall["matched_ticket_id"], "tick-102.txt")
         client.arecall.assert_awaited_once()
+
+    def test_unrelated_cloud_recall_cannot_trigger_high_confidence_resolution(self):
+        result = SimpleNamespace(
+            text="Restart Outlook and clear cached SSO credentials.",
+            scores=SimpleNamespace(final=1.0, semantic=1.0),
+            document_id="ticket-outlook.txt",
+            metadata={"signature": "OUTLOOK_SSO_LOOP"},
+        )
+        client = MagicMock()
+        client.arecall = AsyncMock(return_value=SimpleNamespace(results=[result]))
+
+        with patch.object(hindsight_memory, "initialize_hindsight_client"), patch.object(
+            hindsight_memory, "_hindsight_client", client
+        ):
+            recall = asyncio.run(
+                hindsight_memory.arecall_resolution(
+                    "WINDOWS_BLUE_SCREEN_DRIVER_FAILURE",
+                    "blue screen after display driver update",
+                )
+            )
+
+        self.assertLess(recall["confidence"], 0.85)
+
+    def test_unrelated_fallback_match_cannot_trigger_high_confidence_resolution(self):
+        with patch.object(hindsight_memory, "initialize_hindsight_client"), patch.object(
+            hindsight_memory, "_hindsight_client", None
+        ), patch.object(hindsight_memory, "is_cloud_mode", return_value=False), patch.object(
+            hindsight_memory,
+            "search_bank_matches",
+            return_value=[
+                {
+                    "ticket_id": "ticket-outlook.txt",
+                    "confidence": 0.99,
+                    "error_signature": "OUTLOOK_SSO_LOOP",
+                    "resolution_steps": "Clear Outlook credentials.",
+                    "metadata": {"title": "Outlook SSO loop"},
+                }
+            ],
+        ):
+            recall = asyncio.run(
+                hindsight_memory.arecall_resolution(
+                    "WINDOWS_BLUE_SCREEN_DRIVER_FAILURE",
+                    "blue screen after display driver update",
+                )
+            )
+
+        self.assertNotEqual(recall["matched_ticket_id"], "ticket-outlook.txt")
+        self.assertLess(recall["confidence"], 0.85)
 
     def test_stats_report_cloud_document_and_resolution_counts(self):
         client = MagicMock()

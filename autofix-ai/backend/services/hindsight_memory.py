@@ -40,6 +40,7 @@ CONFIDENCE_THRESHOLD = float(os.getenv("CONFIDENCE_THRESHOLD", "0.85"))
 _hindsight_client = None
 _client_initialized = False
 _cloud_mode_enabled = True  # Online cloud mode enabled by default (uses cloud credits)
+_cloud_write_status: Dict[str, Dict[str, Any]] = {}
 
 
 def set_cloud_mode(enabled: bool) -> bool:
@@ -54,6 +55,25 @@ def set_cloud_mode(enabled: bool) -> bool:
 def is_cloud_mode() -> bool:
     global _cloud_mode_enabled
     return _cloud_mode_enabled
+
+
+def get_cloud_write_status(ticket_id: str) -> Dict[str, Any]:
+    """Return the last cloud-retention outcome for a ticket."""
+    return _cloud_write_status.get(
+        ticket_id,
+        {"status": "not_attempted", "document_id": f"{ticket_id.lower()}.txt"},
+    )
+
+
+def _signature_is_relevant(query_signature: str, candidate_signature: str) -> bool:
+    query_tokens = set(re.findall(r"[a-z0-9]+", (query_signature or "").lower()))
+    candidate_tokens = set(re.findall(r"[a-z0-9]+", (candidate_signature or "").lower()))
+    if not query_tokens or not candidate_tokens:
+        return False
+    if query_tokens == candidate_tokens:
+        return True
+    overlap = query_tokens.intersection(candidate_tokens)
+    return len(overlap) >= 2 and len(overlap) / len(query_tokens) >= 0.5
 
 
 # Local in-memory / persistent fallback memory store
@@ -145,6 +165,8 @@ class LocalMemoryStore:
                     "timestamp": doc["timestamp"],
                 })
             return results
+
+        return results
 
 
 _local_store = LocalMemoryStore()
@@ -250,13 +272,25 @@ async def arecall_resolution(error_signature: str, query_text: str = "") -> Dict
     bank_matches = search_bank_matches(query_text=query_text, error_signature=error_signature, top_k=5)
 
     # Pick best local / bank candidate
+    relevant_bank_matches = [
+        match for match in bank_matches
+        if _signature_is_relevant(error_signature, match.get("error_signature", ""))
+    ]
+    relevant_local_matches = [
+        match for match in local_matches
+        if _signature_is_relevant(error_signature, match.get("error_signature", ""))
+    ]
     best_candidate = None
-    if bank_matches and local_matches:
-        best_candidate = bank_matches[0] if bank_matches[0]["confidence"] >= local_matches[0]["confidence"] else local_matches[0]
-    elif bank_matches:
-        best_candidate = bank_matches[0]
-    elif local_matches:
-        best_candidate = local_matches[0]
+    if relevant_bank_matches and relevant_local_matches:
+        best_candidate = (
+            relevant_bank_matches[0]
+            if relevant_bank_matches[0]["confidence"] >= relevant_local_matches[0]["confidence"]
+            else relevant_local_matches[0]
+        )
+    elif relevant_bank_matches:
+        best_candidate = relevant_bank_matches[0]
+    elif relevant_local_matches:
+        best_candidate = relevant_local_matches[0]
 
     # Credit Saver / Fallback optimization: Only prioritize local when Cloud Mode is switched OFF
     if not is_cloud_mode() and best_candidate:
@@ -289,6 +323,15 @@ async def arecall_resolution(error_signature: str, query_text: str = "") -> Dict
             if results and hasattr(results, "results") and results.results:
                 best = results.results[0]
                 text = getattr(best, "text", "")
+                result_metadata = getattr(best, "metadata", {}) or {}
+                signature_match = re.search(
+                    r"(?:ERROR_SIGNATURE|SIGNATURE)\s*[:=]\s*([A-Z0-9_<>-]+)",
+                    text or "",
+                    flags=re.IGNORECASE,
+                )
+                recalled_signature = result_metadata.get("signature") or (
+                    signature_match.group(1).upper() if signature_match else ""
+                )
                 
                 # Accurately extract score from Hindsight RecallScores schema
                 score = 0.92
@@ -296,6 +339,21 @@ async def arecall_resolution(error_signature: str, query_text: str = "") -> Dict
                     score = getattr(best.scores, "final", None) or getattr(best.scores, "semantic", None) or 0.92
                 elif hasattr(best, "score") and best.score is not None:
                     score = float(best.score)
+
+                query_tokens = set(re.findall(r"[a-z0-9]+", error_signature.lower()))
+                recalled_tokens = set(re.findall(r"[a-z0-9]+", recalled_signature.lower()))
+                text_tokens = set(re.findall(r"[a-z0-9]+", (text or "").lower()))
+                signature_overlap = query_tokens.intersection(recalled_tokens)
+                content_overlap = query_tokens.intersection(text_tokens)
+                if (recalled_signature and not _signature_is_relevant(error_signature, recalled_signature)) or (
+                    not recalled_signature and len(content_overlap) < 2
+                ):
+                    logger.warning(
+                        "[HINDSIGHT CLOUD] Rejected unrelated recall for %s (signature=%s).",
+                        error_signature,
+                        recalled_signature or "unknown",
+                    )
+                    score = min(float(score), 0.20)
 
                 doc_id = getattr(best, "document_id", "HINDSIGHT-CLOUD")
                 history_texts = [getattr(r, "text", "") for r in results.results[:3]]
@@ -306,6 +364,7 @@ async def arecall_resolution(error_signature: str, query_text: str = "") -> Dict
                     "confidence": float(score),
                     "resolution_steps": text,
                     "matched_ticket_id": doc_id,
+                    "error_signature": recalled_signature or error_signature,
                     "history": history_texts,
                     "source": "hindsight_cloud",
                     "fallback_used": False,
@@ -329,7 +388,7 @@ async def arecall_resolution(error_signature: str, query_text: str = "") -> Dict
             "matched_ticket_id": best_candidate["ticket_id"],
             "title": best_candidate.get("title") or best_candidate.get("metadata", {}).get("title", ""),
             "error_signature": best_candidate.get("error_signature", error_signature),
-            "history": bank_matches or local_matches,
+            "history": relevant_bank_matches or relevant_local_matches,
             "source": "sqlite_bank",
             "fallback_used": True,
         }
@@ -391,8 +450,8 @@ async def arecord_ticket_resolution(
     metadata = metadata or {}
     meta_tags = [res_type.lower(), metadata.get("category", "L1").lower()]
     cloud_metadata = {
-        key: metadata[key]
-        for key in ("category", "priority", "title")
+        key: str(metadata[key])
+        for key in ("category", "priority", "title", "description", "company_id")
         if isinstance(metadata.get(key), str)
     }
 
@@ -421,10 +480,18 @@ async def arecord_ticket_resolution(
 
     # Ingest to Vectorize Hindsight Cloud if client available
     initialize_hindsight_client()
+    document_id = cloud_document_id or ticket_id
+    _cloud_write_status[ticket_id] = {
+        "status": "not_configured" if not _hindsight_client else "pending",
+        "document_id": document_id,
+        "bank_id": HINDSIGHT_BANK_ID,
+    }
     if _hindsight_client:
         try:
             content_payload = (
                 f"TICKET_ID: {ticket_id}\n"
+                f"TITLE: {metadata.get('title', ticket_id)}\n"
+                f"DESCRIPTION: {metadata.get('description', '')}\n"
                 f"ERROR_SIGNATURE: {error_signature}\n"
                 f"RESOLUTION_TYPE: {res_type}\n"
                 f"RESOLUTION_STEPS:\n{resolution_steps}\n"
@@ -433,7 +500,7 @@ async def arecord_ticket_resolution(
             await _hindsight_client.aretain(
                 bank_id=HINDSIGHT_BANK_ID,
                 content=content_payload,
-                document_id=cloud_document_id or ticket_id,
+                document_id=document_id,
                 tags=meta_tags,
                 metadata={
                     **cloud_metadata,
@@ -445,10 +512,12 @@ async def arecord_ticket_resolution(
             )
             logger.info(
                 f"Successfully retained ticket {ticket_id} to Hindsight Cloud "
-                f"({HINDSIGHT_BANK_ID}, document: {cloud_document_id or ticket_id})."
+                f"({HINDSIGHT_BANK_ID}, document: {document_id})."
             )
+            _cloud_write_status[ticket_id]["status"] = "recorded"
         except Exception as e:
             err_msg = str(e).lower()
+            _cloud_write_status[ticket_id].update({"status": "failed", "error": str(e)})
             if any(k in err_msg for k in ["credit", "quota", "balance", "402", "429", "rate limit", "billing"]):
                 logger.warning(
                     f"[CREDIT FALLBACK] Hindsight Cloud credit/quota limit reached: {e}. "

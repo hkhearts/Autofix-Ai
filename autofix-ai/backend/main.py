@@ -30,6 +30,7 @@ from backend.services.hindsight_memory import (
     asearch_memory,
     atest_cloud_connection,
     delete_ticket_memory,
+    get_cloud_write_status,
     initialize_hindsight_client,
     record_ticket_resolution,
     is_cloud_mode,
@@ -111,6 +112,8 @@ class Ticket(BaseModel):
     created_at: str
     resolved_at: Optional[str] = None
     tags: List[str] = Field(default_factory=list)
+    hindsight_sync_status: str = "not_attempted"
+    hindsight_document_id: Optional[str] = None
 
 
 class FeedbackRequest(BaseModel):
@@ -564,9 +567,11 @@ async def create_ticket(
             resolution_type=res_type,
             metadata={
                 "title": title,
+                "description": description,
                 "category": category,
                 "priority": priority,
                 "client_name": client_name,
+                "company_id": company_id,
                 "confidence": confidence,
             },
             cloud_document_id=f"{ticket_id.lower()}.txt",
@@ -600,9 +605,11 @@ async def create_ticket(
             resolution_type="HUMAN_IN_THE_LOOP",
             metadata={
                 "title": title,
+                "description": description,
                 "category": category,
                 "priority": priority,
                 "client_name": client_name,
+                "company_id": company_id,
                 "confidence": confidence,
             },
             cloud_document_id=f"{ticket_id.lower()}.txt",
@@ -665,6 +672,8 @@ async def create_ticket(
         created_at=created_at,
         resolved_at=resolved_at,
         tags=[category.lower(), priority.lower()],
+        hindsight_sync_status=get_cloud_write_status(ticket_id)["status"],
+        hindsight_document_id=get_cloud_write_status(ticket_id).get("document_id"),
     )
 
     TICKET_STORE[ticket_id] = new_ticket
@@ -700,9 +709,11 @@ async def submit_feedback(ticket_id: str, payload: FeedbackRequest):
         resolution_type="HUMAN_IN_THE_LOOP",
         metadata={
             "title": ticket.title,
+            "description": ticket.description,
             "category": ticket.category,
             "priority": ticket.priority,
             "client_name": ticket.client_name,
+            "company_id": ticket.company_id,
             "approved_by": payload.approved_by,
         },
         cloud_document_id=f"{ticket_id.lower()}.txt",
@@ -730,6 +741,8 @@ async def submit_feedback(ticket_id: str, payload: FeedbackRequest):
     ticket.resolution_steps = payload.resolution_steps
     ticket.execution_result = exec_res
     ticket.confidence_score = 1.0  # Human verified 100%
+    ticket.hindsight_sync_status = get_cloud_write_status(ticket_id)["status"]
+    ticket.hindsight_document_id = get_cloud_write_status(ticket_id).get("document_id")
     if ticket.diagnostic_insights:
         ticket.diagnostic_insights.confidence_percent = 100
         ticket.diagnostic_insights.recommended_solution = payload.resolution_steps
