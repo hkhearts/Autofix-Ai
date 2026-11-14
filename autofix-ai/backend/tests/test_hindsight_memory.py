@@ -124,6 +124,28 @@ class HindsightMemoryTests(unittest.TestCase):
 
         self.assertLess(recall["confidence"], 0.85)
 
+    def test_cloud_observation_without_signature_is_not_autonomous(self):
+        result = SimpleNamespace(
+            text="A CRITICAL_PROCESS_DIED blue screen was observed after a driver update.",
+            scores=SimpleNamespace(final=1.0, semantic=1.0),
+            document_id="historical-ref.txt",
+            metadata={},
+        )
+        client = MagicMock()
+        client.arecall = AsyncMock(return_value=SimpleNamespace(results=[result]))
+
+        with patch.object(hindsight_memory, "initialize_hindsight_client"), patch.object(
+            hindsight_memory, "_hindsight_client", client
+        ):
+            recall = asyncio.run(
+                hindsight_memory.arecall_resolution(
+                    "BLUE_SCREEN_KERNEL_SECURITY_CHECK_FAILURE_AUDIO_DRIVER",
+                    "kernel security check failure blue screen after audio driver update",
+                )
+            )
+
+        self.assertLess(recall["confidence"], 0.85)
+
     def test_stats_report_cloud_document_and_resolution_counts(self):
         client = MagicMock()
         client.alist_memories = AsyncMock()

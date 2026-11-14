@@ -357,9 +357,9 @@ async def arecall_resolution(error_signature: str, query_text: str = "") -> Dict
                 signature_overlap = query_tokens.intersection(recalled_tokens)
                 content_overlap = query_tokens.intersection(text_tokens)
                 if (
-                    (recalled_signature and not _signature_is_relevant(error_signature, recalled_signature))
+                    not recalled_signature
+                    or not _signature_is_relevant(error_signature, recalled_signature)
                     or not _resolution_is_relevant(query_text, text)
-                    or (not recalled_signature and len(content_overlap) < 2)
                 ):
                     logger.warning(
                         "[HINDSIGHT CLOUD] Rejected unrelated recall for %s (signature=%s).",
