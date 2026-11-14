@@ -59,21 +59,30 @@ export const TicketStream: React.FC<TicketStreamProps> = ({
     return true;
   });
 
+  const parseTicketDate = (isoStr: string) => {
+    const value = (isoStr || "").trim();
+    if (!value) return 0;
+    const hasTimezone = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(value);
+    const timestamp = Date.parse(hasTimezone ? value : `${value}Z`);
+    return Number.isNaN(timestamp) ? 0 : timestamp;
+  };
+
   // Sort
   const sorted = [...filtered].sort((a, b) => {
     if (sortOrder === "newest") {
-      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      return parseTicketDate(b.created_at) - parseTicketDate(a.created_at);
     }
     if (sortOrder === "oldest") {
-      return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      return parseTicketDate(a.created_at) - parseTicketDate(b.created_at);
     }
     const weight: Record<string, number> = { Critical: 4, High: 3, Medium: 2, Low: 1 };
     return (weight[b.priority] || 1) - (weight[a.priority] || 1);
   });
 
   const formatAgo = (isoStr: string) => {
-    const diffMs = Date.now() - new Date(isoStr).getTime();
-    const mins = Math.max(1, Math.floor(diffMs / 60000));
+    const diffMs = Date.now() - parseTicketDate(isoStr);
+    if (diffMs < 60000) return "just now";
+    const mins = Math.floor(diffMs / 60000);
     if (mins < 60) return `${mins}m ago`;
     const hours = Math.floor(mins / 60);
     if (hours < 24) return `${hours}h ago`;

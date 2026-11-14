@@ -659,6 +659,11 @@ async def asearch_memory(query: str, limit: int = 5) -> List[Dict[str, Any]]:
                 max_tokens=max(512, limit * 512),
             )
             cloud_matches = []
+            signature_match = re.search(
+                r"\b[A-Z][A-Z0-9]+(?:_[A-Z0-9]+)+\b",
+                clean_query,
+            )
+            query_signature = signature_match.group(0) if signature_match else ""
             for result in (results.results or [])[:limit]:
                 score = 0.88
                 if hasattr(result, "scores") and result.scores:
@@ -667,16 +672,22 @@ async def asearch_memory(query: str, limit: int = 5) -> List[Dict[str, Any]]:
                     score = float(result.score)
 
                 metadata = getattr(result, "metadata", {}) or {}
+                recalled_signature = metadata.get("signature", "")
+                if query_signature and (
+                    not recalled_signature
+                    or not _signature_is_relevant(query_signature, recalled_signature)
+                ):
+                    score = min(float(score), 0.20)
                 doc_title = metadata.get("title") or metadata.get("signature") or (result.text[:60] if hasattr(result, "text") else "Hindsight Resolution")
                 cloud_matches.append(
                     {
                         "ticket_id": metadata.get("ticket_id") or getattr(result, "document_id", None) or getattr(result, "id", "HINDSIGHT-CLOUD"),
                         "confidence": round(float(score), 3),
                         "resolution_steps": getattr(result, "text", ""),
-                        "error_signature": metadata.get("signature") or doc_title,
+                        "error_signature": recalled_signature or doc_title,
                         "resolution_type": metadata.get("type", "AUTONOMOUS"),
                         "metadata": metadata,
-                        "timestamp": getattr(result, "mentioned_at", None) or datetime.datetime.now().isoformat(),
+                        "timestamp": getattr(result, "mentioned_at", None) or datetime.datetime.now(datetime.timezone.utc).isoformat(),
                         "source": "hindsight_cloud",
                     }
                 )

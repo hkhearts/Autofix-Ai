@@ -129,7 +129,7 @@ export const MemoryInspector: React.FC<MemoryInspectorProps> = ({
         currentTicket.confidence_score ||
         (currentTicket.diagnostic_insights?.confidence_percent
           ? currentTicket.diagnostic_insights.confidence_percent / 100
-          : 0.96);
+          : 0.05);
       const title =
         currentTicket.diagnostic_insights?.matched_pattern_title || currentTicket.title;
       const solution =
@@ -164,21 +164,6 @@ export const MemoryInspector: React.FC<MemoryInspectorProps> = ({
       if (!list.some((existing) => existing.ticket_id === r.ticket_id)) {
         list.push(r);
       }
-    }
-
-    // 3. Fallback items if completely empty
-    if (list.length === 0) {
-      list.push({
-        ticket_id: "TICK-106",
-        confidence: 0.96,
-        resolution_steps:
-          "1. Terminate `outlook.exe` processes\n2. Rename damaged OST file to .old\n3. Launch `outlook.exe /cleanreminders /resetnavpane`\n4. Re-sync fresh cache from Exchange.",
-        error_signature: "OUTLOOK_OST_CORRUPT_ERROR_0x8004010F",
-        resolution_type: "AUTONOMOUS",
-        metadata: { title: "Outlook MAPI Profile Corruption & OST Synchronization Lock" },
-        timestamp: new Date().toISOString(),
-        source: "hindsight_cloud",
-      });
     }
 
     return list;

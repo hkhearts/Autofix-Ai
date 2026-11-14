@@ -53,6 +53,10 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 logger = logging.getLogger("autofix.api")
 
+
+def utc_now_iso() -> str:
+    return datetime.datetime.now(datetime.timezone.utc).isoformat()
+
 app = FastAPI(
     title="Autofix-AI Orchestrator",
     description="Self-Healing L1/L2 IT Support Ticketing Agent with Vision & Persistent Hindsight Memory",
@@ -79,7 +83,7 @@ class Message(BaseModel):
     sender: str
     role: str  # 'user', 'agent', 'system', 'engineer'
     content: str
-    timestamp: str = Field(default_factory=lambda: datetime.datetime.now().isoformat())
+    timestamp: str = Field(default_factory=utc_now_iso)
 
 
 class DiagnosticInsights(BaseModel):
@@ -174,7 +178,7 @@ def load_users():
             "role": "Lead Systems Engineer",
             "company_id": "acme-corp",
             "company_name": "Acme Global Industries",
-            "created_at": datetime.datetime.now().isoformat(),
+            "created_at": utc_now_iso(),
         }
     ]
 
@@ -351,7 +355,7 @@ async def startup_event():
                         diagnostic_insights=guidance,
                         company_id="acme-corp",
                         created_at=(datetime.datetime.now() - datetime.timedelta(minutes=30)).isoformat(),
-                        resolved_at=datetime.datetime.now().isoformat(),
+                        resolved_at=utc_now_iso(),
                         tags=item.get("tags", []),
                         messages=[
                             Message(sender=item.get("client_name", "IT User"), role="user", content=item["description"]),
@@ -546,7 +550,7 @@ async def create_ticket(
     if confidence <= 0.0:
         confidence = round(guidance.confidence_percent / 100.0, 2)
 
-    created_at = datetime.datetime.now().isoformat()
+    created_at = utc_now_iso()
     messages = [
         Message(sender=client_name, role="user", content=description),
     ]
@@ -559,7 +563,7 @@ async def create_ticket(
     if confidence >= CONFIDENCE_THRESHOLD and matched_steps:
         # Autonomous Fix Execution
         exec_result = simulate_fix(matched_steps, ticket_id)
-        resolved_at = datetime.datetime.now().isoformat()
+        resolved_at = utc_now_iso()
         ticket_status = "RESOLVED_AUTONOMOUSLY"
         res_type = "AUTONOMOUS"
 
@@ -750,7 +754,7 @@ async def submit_feedback(ticket_id: str, payload: FeedbackRequest):
     if ticket.diagnostic_insights:
         ticket.diagnostic_insights.confidence_percent = 100
         ticket.diagnostic_insights.recommended_solution = payload.resolution_steps
-    ticket.resolved_at = datetime.datetime.now().isoformat()
+    ticket.resolved_at = utc_now_iso()
 
     ticket.messages.append(
         Message(
@@ -866,7 +870,7 @@ def update_ticket_status(ticket_id: str, payload: StatusUpdateRequest):
     ticket.status = payload.status
     if "RESOLVED" in payload.status:
         if not ticket.resolved_at:
-            ticket.resolved_at = datetime.datetime.now().isoformat()
+            ticket.resolved_at = utc_now_iso()
         res_type = "AUTONOMOUS" if "AUTONOMOUS" in payload.status else "HUMAN_IN_THE_LOOP"
         ticket.resolution_type = res_type
         # Record resolution to Hindsight memory
@@ -1156,7 +1160,7 @@ def signup(payload: Dict[str, Any]):
         "role": "IT Administrator",
         "company_id": company_id,
         "company_name": company_name or "Enterprise IT",
-        "created_at": datetime.datetime.now().isoformat(),
+        "created_at": utc_now_iso(),
     }
     USERS_LIST.append(new_user)
     save_users()
@@ -1207,7 +1211,7 @@ def update_profile(payload: ProfileUpdateRequest):
         "role": payload.role or "IT Engineer",
         "company_name": payload.company_name or "Enterprise IT",
         "company_id": (payload.company_name or "enterprise").lower().replace(" ", "-"),
-        "created_at": datetime.datetime.now().isoformat(),
+        "created_at": utc_now_iso(),
     }
     USERS_LIST.append(new_user)
     save_users()
