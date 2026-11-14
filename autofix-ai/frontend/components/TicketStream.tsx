@@ -62,17 +62,23 @@ export const TicketStream: React.FC<TicketStreamProps> = ({
   const parseTicketDate = (isoStr: string) => {
     const value = (isoStr || "").trim();
     if (!value) return 0;
-    const hasTimezone = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(value);
-    const timestamp = Date.parse(hasTimezone ? value : `${value}Z`);
+    const timestamp = Date.parse(value);
     return Number.isNaN(timestamp) ? 0 : timestamp;
   };
 
+  const hasTimezone = (isoStr: string) =>
+    /(?:Z|[+-]\d{2}:?\d{2})$/i.test((isoStr || "").trim());
+
   // Sort
   const sorted = [...filtered].sort((a, b) => {
+    const aIsLegacy = !hasTimezone(a.created_at);
+    const bIsLegacy = !hasTimezone(b.created_at);
     if (sortOrder === "newest") {
+      if (aIsLegacy !== bIsLegacy) return aIsLegacy ? 1 : -1;
       return parseTicketDate(b.created_at) - parseTicketDate(a.created_at);
     }
     if (sortOrder === "oldest") {
+      if (aIsLegacy !== bIsLegacy) return aIsLegacy ? -1 : 1;
       return parseTicketDate(a.created_at) - parseTicketDate(b.created_at);
     }
     const weight: Record<string, number> = { Critical: 4, High: 3, Medium: 2, Low: 1 };
